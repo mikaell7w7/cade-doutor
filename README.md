@@ -1,6 +1,6 @@
 # Cadê Doutor
 
-Pesquisa pessoal da rede credenciada, favoritos e conversa com pesquisa de prestadores com seu plano do ChatGPT. Código aberto, licença MIT. Prévia técnica **0.3.0**.
+Pesquisa pessoal da rede credenciada, favoritos e conversa com pesquisa de prestadores com seu plano do ChatGPT. Código aberto, licença MIT. Prévia técnica **0.3.1**.
 
 [Baixar versões](https://github.com/mikaell7w7/cade-doutor/releases) · [Instalação](docs/INSTALACAO.md) · [Privacidade](docs/PRIVACIDADE.md) · [Roadmap](docs/ROADMAP.md)
 

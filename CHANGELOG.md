@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1 - 2026-11-17
+
+Título da conversa em linha própria no celular para preservar sua identificação. O teste Chromium verifica a largura útil do título e aguarda a conclusão da gravação dos metadados antes da captura.
+
 ## 0.3.0 - 2026-11-17
 
 - Chat com rolagem própria, compositor separado e navegação por conversas em desktop e celular.

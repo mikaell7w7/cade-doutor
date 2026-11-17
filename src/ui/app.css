@@ -1211,3 +1211,27 @@ body.chat-mode #notice {
     display: inline-flex;
   }
 }
+
+@media (max-width: 620px) {
+  .chat-topbar {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+  }
+  .chat-topbar > div {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .chat-topbar #toggle-chats {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+  }
+  .chat-topbar #edit-chat {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .chat-topbar .chat-options {
+    grid-column: 3;
+    grid-row: 2;
+  }
+}

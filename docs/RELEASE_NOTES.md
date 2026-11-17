@@ -1,4 +1,4 @@
-## Cadê Doutor 0.3.0 · conversas e acompanhamento pessoal
+## Cadê Doutor 0.3.1 · conversas e acompanhamento pessoal
 
 - Lista lateral de conversas salvas, com busca por nome, tags e prestador vinculado.
 - Renomeação, cores e tags pelo botão Organizar; retomada após recarregar ou reiniciar o serviço.
@@ -11,7 +11,7 @@
 
 Pare o serviço com Ctrl+C. Execute `git pull --ff-only`, `npm ci`, `npm run build` e `npm start`. Recarregue com Ctrl+Shift+R e informe o novo código em Conexão. Na extensão, use Recarregar em `chrome://extensions`.
 
-Antes de atualizar, copie respostas antigas que queira guardar: versões anteriores não persistiam conversas e não permitem recuperação automática. Conta autorizada e favoritos são preservados.
+Antes de atualizar, copie respostas antigas que queira guardar: versões anteriores à 0.3.0 não persistiam conversas e não permitem recuperação automática. Conta autorizada e favoritos são preservados.
 
 ### Validação e limites
 

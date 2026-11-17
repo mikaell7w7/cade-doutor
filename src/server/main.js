@@ -108,7 +108,7 @@ export async function createApp({
         return;
       }
       if (u.pathname === "/api/health") {
-        json(res, 200, { name: "Cadê Doutor", version: "0.3.0" });
+        json(res, 200, { name: "Cadê Doutor", version: "0.3.1" });
         return;
       }
       if (u.pathname === "/api/pair" && req.method === "POST") {

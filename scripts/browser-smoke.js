@@ -77,6 +77,10 @@ try {
     .locator("#active-chat-title")
     .filter({ hasText: "Dentistas dos filhos" })
     .waitFor();
+  await page.locator("#chat-editor").waitFor({ state: "hidden" });
+  await page.waitForFunction(() =>
+    document.querySelector("#history-state").textContent.includes("salvas neste"),
+  );
   const geometry = await page.evaluate(() => {
     const log = document.querySelector("#chat-scroll").getBoundingClientRect(),
       form = document.querySelector("#chat-form").getBoundingClientRect();
@@ -155,6 +159,10 @@ try {
   assert(mobile.logBottom <= mobile.formTop + 1);
   assert(mobile.formBottom <= mobile.height);
   assert(!mobile.overflow);
+  const titleWidth = await page
+    .locator("#active-chat-title")
+    .evaluate((el) => el.getBoundingClientRect().width);
+  assert(titleWidth > 300, "The chat title must have its own row on mobile");
   await page.locator("#toggle-chats").click();
   await page.locator("#chat-search").fill("ortodontia");
   assert.equal(await page.locator(".chat-list-item").count(), 1);

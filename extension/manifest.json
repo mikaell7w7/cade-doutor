@@ -1,18 +1,28 @@
 {
   "manifest_version": 3,
   "name": "Cadê Doutor",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Pesquise a rede credenciada, organize favoritos e compare prestadores com seu plano do ChatGPT.",
   "permissions": ["storage", "sidePanel"],
   "host_permissions": [
     "http://127.0.0.1:43119/*",
     "https://raw.githubusercontent.com/mikaell7w7/cade-doutor/*"
   ],
-  "action": { "default_title": "Abrir Cadê Doutor" },
-  "background": { "service_worker": "background.js", "type": "module" },
-  "side_panel": { "default_path": "index.html" },
+  "action": {
+    "default_title": "Abrir Cadê Doutor"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "index.html"
+  },
   "content_scripts": [
-    { "matches": ["https://app.tstsaude.tst.jus.br/*"], "js": ["content.js"] }
+    {
+      "matches": ["https://app.tstsaude.tst.jus.br/*"],
+      "js": ["content.js"]
+    }
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'self' http://127.0.0.1:43119 https://raw.githubusercontent.com"
