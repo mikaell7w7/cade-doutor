@@ -108,6 +108,7 @@ test("conversation submits without selection, renders results and reuses complet
     );
   document.getElementById("question").value = "Demorada";
   const pending = chat.submit();
+  await new Promise((resolve) => setTimeout(resolve, 0));
   // A late completion from the previous account must not overwrite the new conversation.
   chat.resetForAccount("account-b");
   finish();

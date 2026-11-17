@@ -8,6 +8,10 @@ Catálogo inicial, extensão Chrome, favoritos e backups, OAuth oficial, compara
 
 Busca no catálogo completo por ferramentas, filtros e paginação; refinamentos com contexto; respostas formatadas, fichas e favoritos na conversa.
 
+## 0.3: histórico pessoal
+
+Conversas persistentes por perfil, nomes, cores, tags, vínculos com prestadores, registros de contatos e backup local. Layout com área de leitura e compositor separados.
+
 ## Próxima validação
 
 - Validar busca por ferramentas e refinamentos com uma conta real. Login e inferência simples foram observados na prévia 0.1.1; renovação e revogação reais ainda precisam de homologação.

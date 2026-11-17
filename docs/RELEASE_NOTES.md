@@ -1,17 +1,18 @@
-## Cadê Doutor 0.2.1 · correção de streaming
+## Cadê Doutor 0.3.0 · conversas e acompanhamento pessoal
 
-Corrige uma falha que podia exibir “O modelo encerrou sem uma resposta” mesmo após receber uma chamada de ferramenta.
+- Lista lateral de conversas salvas, com busca por nome, tags e prestador vinculado.
+- Renomeação, cores e tags pelo botão Organizar; retomada após recarregar ou reiniciar o serviço.
+- Respostas em área rolável própria e campo de mensagem separado, sem cobrir o conteúdo.
+- Ficha e contatos: registre data, atendente, canal, situação e anotações; vincule e retome uma conversa pela ficha.
+- Favoritos preservados e backup separado de conversas e contatos em Conexão.
+- Dados locais separados por perfil; registros pessoais não são enviados automaticamente à IA. A continuação usa até 20 trocas completas recentes, preservando o histórico integral para leitura.
 
-- Eventos finais com `output` vazio ou parcial preservam os itens já recebidos.
-- Argumentos de ferramentas são consolidados pelos eventos de streaming.
-- Texto recebido somente no evento final é exibido, sem duplicar trechos já apresentados.
-- Falhas tardias continuam impedindo sucesso; respostas realmente vazias exibem um diagnóstico sem perguntas, credenciais ou conteúdo pessoal.
-- Testes cobrem a busca “ortodontista na Asa Sul” com ferramenta transmitida antes de um evento final vazio.
+### Atualização
 
-### Atualizar
+Pare o serviço com Ctrl+C. Execute `git pull --ff-only`, `npm ci`, `npm run build` e `npm start`. Recarregue com Ctrl+Shift+R e informe o novo código em Conexão. Na extensão, use Recarregar em `chrome://extensions`.
 
-Encerre o serviço com Ctrl+C. Na pasta do projeto, execute `git pull --ff-only`, `npm ci`, `npm run build` e `npm start`. Recarregue o navegador com Ctrl+Shift+R e informe o novo código em Conexão. A conta autorizada e os favoritos são preservados. Na extensão, use Recarregar em `chrome://extensions`.
+Antes de atualizar, copie respostas antigas que queira guardar: versões anteriores não persistiam conversas e não permitem recuperação automática. Conta autorizada e favoritos são preservados.
 
-### Validação
+### Validação e limites
 
-A falha do parser foi reproduzida e corrigida em testes automatizados. A captura de tela identifica o sintoma, mas não contém os eventos brutos da OpenAI para confirmar a causa da ocorrência específica. A correção ainda precisa ser conferida com a conta real.
+Testes automatizados verificam persistência, isolamento por conta, conflitos entre janelas, contexto da IA e importação. O fluxo do Chromium usa conta e respostas simuladas para verificar retomada, organização, contatos, favoritos e posicionamento em desktop/celular. O serviço salva localmente, sem nuvem ou envio de mensagens aos prestadores. Faça backups dos dados pessoais.

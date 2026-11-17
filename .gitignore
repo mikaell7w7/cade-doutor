@@ -10,3 +10,5 @@ coverage/
 .cade-doutor/
 credentials*.json
 personal*.json
+workspace-*.json
+ui-results/

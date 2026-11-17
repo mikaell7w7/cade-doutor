@@ -1,6 +1,6 @@
 # Cadê Doutor
 
-Pesquisa pessoal da rede credenciada, favoritos e conversa com pesquisa de prestadores com seu plano do ChatGPT. Código aberto, licença MIT. Prévia técnica **0.2.1**.
+Pesquisa pessoal da rede credenciada, favoritos e conversa com pesquisa de prestadores com seu plano do ChatGPT. Código aberto, licença MIT. Prévia técnica **0.3.0**.
 
 [Baixar versões](https://github.com/mikaell7w7/cade-doutor/releases) · [Instalação](docs/INSTALACAO.md) · [Privacidade](docs/PRIVACIDADE.md) · [Roadmap](docs/ROADMAP.md)
 
@@ -8,6 +8,7 @@ Pesquisa pessoal da rede credenciada, favoritos e conversa com pesquisa de prest
 
 - Catálogo TST Saúde com 690 unidades e 131 categorias, coletado em 17/11/2026. Pesquisa por nome, especialidade, região e tipo de atendimento.
 - Extensão Chrome Manifest V3 com painel lateral e botão no portal TST Saúde.
+- Conversas persistentes com nomes, cores, tags e vínculos com prestadores; registros de contatos e backup separado por perfil.
 - Favoritos, listas, anotações e backup JSON pessoal. Atualizações preservam unidades favoritas ausentes da nova coleta.
 - Aplicativo local com fluxo oficial **Continue with ChatGPT**: OAuth, PKCE, seleção de conta, modelos da conta, renovação e revogação. Tokens permanecem no computador.
 - Assistente conversacional que pesquisa todo o catálogo sem seleção em Explorar, preserva o contexto dos refinamentos e exibe consultas, tabelas, fichas e favoritos na resposta. Comparar uma seleção de até 30 unidades continua opcional. Pesquisa web opt-in e tratamento de interrupções e limites do plano.
@@ -38,7 +39,13 @@ A tela inicial é **Assistente IA**, com escopo **Todo o catálogo**. Digite, po
 
 A resposta mostra tabelas formatadas e cartões dos prestadores consultados, com ficha, favoritos e pesquisa no Google Maps. Os cartões representam registros consultados, não uma recomendação clínica. A opção de pesquisa na web precisa ser habilitada para consultar fontes externas, quando permitida pelo modelo e pela conta. Distâncias e avaliações não são presumidas.
 
-O histórico fica em memória nesta página e é reenviado à OpenAI nas perguntas seguintes. Recarregar, trocar de conta ou clicar em **Nova conversa** limpa o histórico da interface. Favoritos e anotações continuam separados. Perguntas incompletas ou interrompidas não entram no contexto seguinte.
+As conversas agora são salvas neste computador, separadas por perfil. Na lista lateral, reabra uma conversa e continue de onde parou. **Organizar** permite renomear, escolher uma cor, adicionar tags e vincular prestadores. O campo de mensagem fica separado da área rolável das respostas.
+
+Em **Ficha e contatos**, registre suas tratativas: data, atendente, telefone/WhatsApp/e-mail, situação e anotações. Vincule o contato a uma conversa para retomá-la pela ficha. Favoritos continuam disponíveis nos cartões. Registros pessoais de contato não são enviados automaticamente à IA.
+
+Ao continuar, o contexto recente da conversa é reenviado à OpenAI. Respostas interrompidas não entram nesse contexto. O histórico completo continua salvo, mesmo quando excede a janela de até 20 trocas enviadas à IA. Em **Conexão**, exporte ou importe o backup separado de conversas e contatos.
+
+Conversas de versões anteriores à 0.3.0 não eram gravadas e não podem ser recuperadas automaticamente após fechar a página. Antes de atualizar, copie manualmente qualquer resposta antiga que queira guardar.
 
 Para atualizar uma instalação pelo código, encerre o serviço com Ctrl+C e execute na pasta do projeto:
 

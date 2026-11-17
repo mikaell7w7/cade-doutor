@@ -1,3 +1,7 @@
+import { createWorkspace } from "./workspace.js";
+import { createChatHistory } from "./chat-history.js";
+import { createContacts } from "./contacts.js";
+import { validateWorkspace } from "../core/workspace.js";
 import { createAssistant } from "./chat.js";
 import {
   searchUnits,
@@ -30,7 +34,9 @@ let session = ext
   pageSize = 24,
   connected = false,
   status = {},
-  assistant;
+  assistant,
+  chatHistory,
+  contacts;
 const notice = (t) => {
   $("#notice").textContent = t;
 };
@@ -44,6 +50,7 @@ const action =
     }
   };
 function tab(name) {
+  document.body.classList.toggle("chat-mode", name === "ai");
   for (const p of document.querySelectorAll(".pane")) p.hidden = p.id !== name;
   for (const b of document.querySelectorAll("nav button"))
     b.classList.toggle("active", b.dataset.tab === name);
@@ -195,7 +202,23 @@ function card(u, missing = false, showDetails = true) {
     n.textContent = [f.list, f.note].filter(Boolean).join(": ");
     el.append(n);
   }
-  if (showDetails) actions.append(button("Ver ficha", () => openProvider(u.id)));
+  if (showDetails)
+    actions.append(
+      button(
+        "Ficha e contatos" +
+          (workspace.get().contacts.filter((c) => c.providerId === u.id).length
+            ? ` (${workspace.get().contacts.filter((c) => c.providerId === u.id).length})`
+            : ""),
+        () => openProvider(u.id),
+      ),
+    );
+  actions.append(
+    button("Conversar sobre", async () => {
+      await chatHistory.fresh(u);
+      $("#provider-dialog").close();
+      tab("ai");
+    }),
+  );
   el.append(actions);
   return el;
 }
@@ -285,8 +308,17 @@ $("#more").onclick = () => {
   render();
 };
 async function refresh() {
-  status = await api("status");
+  if (assistant?.isBusy())
+    throw new Error("Interrompa a pesquisa antes de atualizar a conexão.");
+  await chatHistory?.save();
+  const nextStatus = await api("status");
+  if (status.active !== nextStatus.active) {
+    chatHistory?.detach();
+    workspace.reset();
+  }
+  status = nextStatus;
   assistant?.resetForAccount(status.active);
+  contacts?.reset();
   connected = true;
   $("#connection-state").textContent = "Conectado ao serviço local";
   $("#account").replaceChildren(
@@ -304,6 +336,8 @@ async function refresh() {
       : "Autorize o uso do plano na aba Conexão.";
   personal = validatePersonal(await api("personal"));
   setCatalog(await api("catalog"));
+  await workspace.load();
+  await chatHistory.loaded();
   $("#history").textContent = (await api("history"))
     .slice(-3)
     .map(
@@ -355,11 +389,15 @@ $("#login").onclick = action(async () => {
 });
 $("#refresh-auth").onclick = action(refresh);
 $("#select-account").onclick = action(async () => {
+  await flushHistory();
   await api("auth/select", { account: $("#account").value });
+  chatHistory.detach();
   await refresh();
 });
 $("#logout").onclick = action(async () => {
+  await flushHistory();
   const result = await api("auth/logout", { account: $("#account").value });
+  chatHistory.detach();
   await refresh();
   notice(result.message);
 });
@@ -427,16 +465,33 @@ $("#open-map").onclick = () => {
   else window.open("/map.html", "_blank");
 };
 function openProvider(id) {
-  const unit = catalog?.units.find((u) => u.id === id);
+  const unit =
+    catalog?.units.find((u) => u.id === id) ?? personal.favorites[id]?.snapshot;
   if (!unit) {
     notice("Unidade não localizada no catálogo atual.");
     return;
   }
   $("#provider-details").replaceChildren(card(unit, false, false));
   $("#provider-dialog").dataset.id = id;
+  contacts.show(unit);
   $("#provider-dialog").showModal();
 }
 $("#close-provider").onclick = () => $("#provider-dialog").close();
+const workspace = createWorkspace({
+  api,
+  notice,
+  changed: () => {
+    chatHistory?.render();
+    contacts?.render();
+  },
+});
+async function flushHistory() {
+  if (assistant.isBusy())
+    throw new Error("Interrompa a pesquisa antes de trocar de conta.");
+  await chatHistory.save();
+  if (workspace.dirty())
+    throw new Error("Exporte as alterações pendentes antes de trocar de conta.");
+}
 assistant = createAssistant({
   base,
   getSession: () => session,
@@ -446,6 +501,84 @@ assistant = createAssistant({
   renderCard: card,
   openProvider,
   notice,
+  beforeSubmit: (question) => chatHistory.prepare(question),
+  saveChat: () => chatHistory.save(),
+  scheduleSave: () => chatHistory?.schedule(),
+});
+chatHistory = createChatHistory({
+  workspace,
+  capture: () => assistant.capture(),
+  restore: (c) => assistant.restore(c),
+  canNavigate: () => !assistant.isBusy(),
+  getCatalog: () => catalog,
+  openProvider,
+  notice,
+});
+contacts = createContacts({
+  workspace,
+  currentChat: () => chatHistory.currentId(),
+  openChat: async (id) => {
+    await chatHistory.open(id);
+    tab("ai");
+  },
+  notice,
+});
+$("#export-workspace").onclick = action(async () => {
+  try {
+    await chatHistory.save();
+  } catch {} // Export also rescues a conflicting local copy.
+  download("cade-doutor-conversas-contatos.json", {
+    ...validateWorkspace(workspace.get()),
+    revision: 0,
+  });
+});
+$("#import-workspace").onchange = action(async (e) => {
+  if (assistant.isBusy()) throw new Error("Interrompa a pesquisa antes de importar.");
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 8_100_000) throw new Error("Arquivo excede 8 MB.");
+  const imported = validateWorkspace(JSON.parse(await file.text()));
+  if (
+    !confirm(
+      `Importar ${imported.chats.length} conversas e ${imported.contacts.length} contatos neste perfil? IDs iguais serão substituídos. Favoritos permanecem inalterados.`,
+    )
+  )
+    return;
+  await chatHistory.save();
+  await workspace.update((d) => {
+    for (const key of ["chats", "contacts"]) {
+      const map = new Map(d[key].map((c) => [c.id, c]));
+      imported[key].forEach((c) => map.set(c.id, c));
+      d[key] = [...map.values()];
+    }
+  });
+  await chatHistory.loaded();
+  notice("Conversas e contatos importados neste perfil.");
+  e.target.value = "";
+});
+$("#reload-workspace").onclick = action(async () => {
+  if (assistant.isBusy()) throw new Error("Interrompa a pesquisa antes de recarregar.");
+  if (
+    workspace.dirty() &&
+    !confirm(
+      "Recarregar descarta as alterações locais ainda não salvas. Já exportou seu backup e deseja continuar?",
+    )
+  )
+    return;
+  workspace.discardPending();
+  chatHistory.detach();
+  await workspace.load();
+  await chatHistory.loaded();
+});
+window.addEventListener("beforeunload", (e) => {
+  if (workspace.dirty() || assistant.isBusy() || chatHistory.unsaved()) {
+    e.preventDefault();
+    e.returnValue = "";
+  }
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden")
+    chatHistory.save().catch((e) => notice(e.message));
 });
 if (ext)
   chrome.storage.onChanged.addListener((changes, area) => {

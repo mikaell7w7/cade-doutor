@@ -1,8 +1,8 @@
-# Instalação da prévia 0.2.1
+# Instalação da prévia 0.3.0
 
 ## Pacotes prontos
 
-Em [Releases](https://github.com/mikaell7w7/cade-doutor/releases), baixe `cade-doutor-local-0.2.1.zip` e `cade-doutor-chrome-0.2.1.zip`. Confira os arquivos com `SHA256SUMS`. No Linux: `sha256sum --check SHA256SUMS`. Coloque todos os arquivos da release na mesma pasta antes da conferência.
+Em [Releases](https://github.com/mikaell7w7/cade-doutor/releases), baixe `cade-doutor-local-0.3.0.zip` e `cade-doutor-chrome-0.3.0.zip`. Confira os arquivos com `SHA256SUMS`. No Linux: `sha256sum --check SHA256SUMS`. Coloque todos os arquivos da release na mesma pasta antes da conferência.
 
 1. Instale Node.js 22 ou superior. O serviço local é previsto para Linux e macOS; Windows ainda requer homologação da proteção de credenciais.
 2. Extraia o ZIP local em uma pasta e execute `node start.mjs` nessa pasta. Não é necessário instalar dependências npm no pacote pronto.
@@ -23,7 +23,15 @@ Para encerrar, use Ctrl+C no terminal. Não exponha a porta na rede nem use prox
 4. Continue no mesmo campo: “Agora somente no Guará” ou “Quais também têm odontopediatria?”. A conversa mantém os critérios anteriores.
 5. Para consultar fontes externas, habilite **Pesquisar na web**, quando disponível para o modelo e a conta. A busca no catálogo funciona sem essa opção.
 
-**Nova conversa** limpa o histórico da página. Ele não persiste após recarregar ou trocar de conta. As mensagens completas são reenviadas à OpenAI nas próximas perguntas; favoritos e notas não entram automaticamente. O limite por conversa é de 20 trocas completas ou 120 mil caracteres, o que ocorrer primeiro. Consultas extensas podem atingir o limite de etapas por mensagem; a resposta deve informar o que ficou pendente.
+**Nova conversa** inicia um novo histórico sem apagar os anteriores. A lista lateral permite buscar por título, tag ou prestador vinculado. **Organizar** permite renomear, escolher cor, alterar tags, vincular prestadores e excluir uma conversa. As respostas rolam em uma área própria; o campo de mensagem permanece fora dela.
+
+Em um cartão, abra **Ficha e contatos** para registrar uma tratativa: data/hora, atendente, canal, situação e anotações. Escolha uma conversa relacionada para acessá-la depois por **Retomar conversa**. Esses registros são anotações pessoais, não enviam mensagens ao prestador e não entram automaticamente no contexto da IA. **Conversar sobre** cria uma conversa vinculada ao prestador. **Favoritar** continua independente.
+
+O histórico é salvo pelo serviço local por perfil, incluindo rascunhos de conversas já criadas. Ao abrir uma conversa após interrupção, uma resposta parcial é identificada e não entra no contexto seguinte. O aplicativo usa até 20 trocas completas recentes e 120 mil caracteres como contexto da IA; mensagens anteriores continuam disponíveis para leitura. Trocar de conta mostra outro histórico.
+
+Em **Conexão**, use **Exportar conversas e contatos** para backup, ou **Importar histórico** para mesclar registros no perfil atual. IDs coincidentes serão substituídos após confirmação. Esse backup é separado dos favoritos. Se outra janela salvar primeiro, o aplicativo bloqueia a sobrescrita: exporte sua cópia pendente e use **Recarregar histórico** para ler a versão do disco.
+
+Limites da prévia: 200 conversas, 200 trocas por conversa, 3.000 contatos e 8 MB no arquivo de histórico. Não há sincronização em nuvem. Históricos anteriores à 0.3.0 não eram persistidos e não podem ser recuperados automaticamente; copie respostas antigas antes de atualizar.
 
 ## Atualizar uma instalação pelo código
 
@@ -68,7 +76,7 @@ Esta prévia não geocodifica automaticamente todas as 690 unidades e não afirm
 
 ## Plugin MCP local
 
-O pacote `cade-doutor-plugin-0.2.1.zip` contém uma pasta `cade-doutor` com `plugin.json`, `mcp.json`, servidor e catálogo. Instale em um host de plugins locais compatível. `${PLUGIN_ROOT}` é resolvido por esse host.
+O pacote `cade-doutor-plugin-0.3.0.zip` contém uma pasta `cade-doutor` com `plugin.json`, `mcp.json`, servidor e catálogo. Instale em um host de plugins locais compatível. `${PLUGIN_ROOT}` é resolvido por esse host.
 
 Em clientes MCP que exigem configuração manual, registre o servidor stdio com comando `node` e argumento absoluto `/caminho/cade-doutor/server/mcp.mjs`. Use o mesmo usuário do sistema e, se personalizado, o mesmo `CADE_DOUTOR_HOME` do aplicativo local. O plugin não necessita do serviço HTTP em execução para ler o catálogo e os favoritos.
 

@@ -6,12 +6,12 @@
     <title>Cadê Doutor</title>
     <link rel="stylesheet" href="app.css" />
   </head>
-  <body>
+  <body class="chat-mode">
     <header>
       <a class="brand" href="#"
         ><span class="logo" aria-hidden="true">+</span
         ><span>Cadê Doutor<small>Sua rede de cuidado</small></span></a
-      ><span class="version">PRÉVIA 0.2.1</span>
+      ><span class="version">PRÉVIA 0.3.0</span>
     </header>
     <nav aria-label="Navegação">
       <button data-tab="explore">Explorar</button
@@ -92,102 +92,145 @@
         </div>
         <div id="favorite-results" class="cards"></div>
       </section>
-      <section id="ai" class="pane">
-        <div class="chat-heading">
-          <div>
-            <p class="eyebrow">ASSISTENTE DA REDE CREDENCIADA</p>
-            <h1>Que atendimento você procura?</h1>
-            <p>Pesquise em toda a rede e refine sua escolha em uma conversa.</p>
+      <section id="ai" class="pane chat-workbench">
+        <aside class="chat-sidebar" aria-label="Histórico de conversas">
+          <div class="resultbar">
+            <h2>Conversas</h2>
+            <button id="close-chats" class="secondary" type="button">Voltar</button
+            ><button id="new-chat" type="button">+ Nova</button>
           </div>
-          <button id="new-chat" class="secondary" type="button">Nova conversa</button>
-        </div>
-        <div class="chat-toolbar">
-          <span id="chat-catalog" class="tag">Todo o catálogo disponível</span
-          ><label
-            >Pesquisar em<select id="scope">
-              <option value="catalog">Todo o catálogo</option>
-              <option value="selected">Somente os selecionados</option>
-            </select></label
-          ><label
-            >Modelo da sua conta<select id="model">
-              <option value="">Conecte sua conta para carregar</option>
-            </select></label
-          >
-        </div>
-        <div id="selection-wrap" hidden>
-          <p class="muted">Escopo opcional para comparar uma seleção específica.</p>
-          <div id="selection"></div>
-        </div>
-        <div id="chat-empty" class="chat-empty">
-          <span class="chat-spark" aria-hidden="true">✦</span>
-          <h2>Comece pelo que você precisa.</h2>
-          <p>
-            Especialidade, região e preferências podem ser informadas na própria pergunta.
+          <label
+            >Buscar conversa ou tag<input
+              id="chat-search"
+              type="search"
+              placeholder="Nome, #tag ou prestador"
+          /></label>
+          <p id="history-state" class="muted" role="status">
+            Conecte o serviço para carregar o histórico.
           </p>
-          <div class="prompt-grid">
+          <div id="chat-list" class="chat-list"></div>
+        </aside>
+        <div class="chat-main">
+          <div class="chat-topbar">
             <button
+              id="toggle-chats"
+              class="secondary"
               type="button"
-              data-prompt="Procuro clínicas de ortodontia para adolescentes. Quais opções constam no meu plano?"
+              aria-expanded="false"
             >
-              Ortodontia para adolescentes
-              <span>Consultar a rede odontológica</span></button
-            ><button
-              type="button"
-              data-prompt="Quais hospitais do catálogo têm endereço no Distrito Federal? Organize por região."
-            >
-              Hospitais por região <span>Conhecer as opções da rede</span></button
-            ><button
-              type="button"
-              data-prompt="Procuro um dermatologista. Pesquise o catálogo e me ajude a escolher uma região de atendimento."
-            >
-              Encontrar um especialista <span>Pesquisar e refinar a escolha</span>
+              Conversas
             </button>
-          </div>
-        </div>
-        <div
-          id="chat-log"
-          class="chat-log"
-          role="log"
-          aria-label="Conversa com o assistente"
-          aria-busy="false"
-        ></div>
-        <form id="chat-form" class="chat-composer">
-          <label for="question">Sua mensagem</label
-          ><textarea
-            id="question"
-            maxlength="8000"
-            rows="3"
-            placeholder="Ex.: Procuro ortodontia para meus filhos, de preferência no Guará ou em Taguatinga."
-          ></textarea>
-          <div class="composer-actions">
-            <label class="check"
-              ><input type="checkbox" id="web-search" /> Complementar com pesquisa na
-              web</label
-            >
-            <div class="actions">
-              <button id="cancel-ai" type="button" class="secondary" hidden>
-                Interromper</button
-              ><button id="ask" type="submit">Enviar mensagem ↑</button>
+            <div>
+              <h1 id="active-chat-title">Nova conversa</h1>
+              <p id="active-chat-tags" class="muted"></p>
             </div>
+            <button id="edit-chat" class="secondary" type="button">Organizar</button>
+            <details class="chat-options">
+              <summary>Opções da pesquisa</summary>
+              <div class="chat-toolbar">
+                <span id="chat-catalog" class="tag">Todo o catálogo disponível</span
+                ><label
+                  >Pesquisar em<select id="scope">
+                    <option value="catalog">Todo o catálogo</option>
+                    <option value="selected">Somente os selecionados</option>
+                  </select></label
+                ><label
+                  >Modelo da sua conta<select id="model">
+                    <option value="">Conecte sua conta para carregar</option>
+                  </select></label
+                >
+              </div>
+              <div id="selection-wrap" hidden>
+                <p class="muted">Escopo opcional para comparar uma seleção específica.</p>
+                <div id="selection"></div>
+              </div>
+              <p class="muted" id="plan-indicator"></p>
+              <a
+                href="https://chatgpt.com/settings/usage"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Gerenciar uso do ChatGPT ↗</a
+              >
+            </details>
           </div>
-          <p id="chat-status" class="muted" role="status">
-            Enter envia · Shift + Enter insere uma linha. Não é preciso selecionar em
-            Explorar.
-          </p>
-        </form>
-        <p class="muted chat-privacy">
-          O histórico fica nesta aba e é enviado à OpenAI ao continuar a conversa, junto
-          com os registros públicos consultados. Anotações pessoais não são enviadas
-          automaticamente. Recarregar a página ou trocar de conta limpa a conversa.
-        </p>
-        <div class="chat-usage">
-          <span id="plan-indicator" class="muted"></span
-          ><a
-            href="https://chatgpt.com/settings/usage"
-            target="_blank"
-            rel="noopener noreferrer"
-            >Gerenciar uso do ChatGPT ↗</a
+          <div
+            id="chat-scroll"
+            class="chat-scroll"
+            tabindex="0"
+            aria-label="Mensagens da conversa"
           >
+            <div id="chat-empty" class="chat-empty">
+              <span class="chat-spark" aria-hidden="true">✦</span>
+              <h2>Comece pelo que você precisa.</h2>
+              <p>
+                Especialidade, região e preferências podem ser informadas na própria
+                pergunta.
+              </p>
+              <div class="prompt-grid">
+                <button
+                  type="button"
+                  data-prompt="Procuro clínicas de ortodontia para adolescentes. Quais opções constam no meu plano?"
+                >
+                  Ortodontia para adolescentes
+                  <span>Consultar a rede odontológica</span></button
+                ><button
+                  type="button"
+                  data-prompt="Quais hospitais do catálogo têm endereço no Distrito Federal? Organize por região."
+                >
+                  Hospitais por região <span>Conhecer as opções da rede</span></button
+                ><button
+                  type="button"
+                  data-prompt="Procuro um dermatologista. Pesquise o catálogo e me ajude a escolher uma região de atendimento."
+                >
+                  Encontrar um especialista <span>Pesquisar e refinar a escolha</span>
+                </button>
+              </div>
+            </div>
+            <div
+              id="chat-log"
+              class="chat-log"
+              role="log"
+              aria-label="Conversa com o assistente"
+              aria-busy="false"
+            ></div>
+          </div>
+          <button
+            id="latest-message"
+            class="secondary latest-message"
+            type="button"
+            hidden
+          >
+            ↓ Última mensagem
+          </button>
+          <form id="chat-form" class="chat-composer">
+            <label for="question">Sua mensagem</label
+            ><textarea
+              id="question"
+              maxlength="8000"
+              rows="3"
+              placeholder="Ex.: Procuro ortodontia para meus filhos, de preferência no Guará ou em Taguatinga."
+            ></textarea>
+            <div class="composer-actions">
+              <label class="check"
+                ><input type="checkbox" id="web-search" /> Complementar com pesquisa na
+                web</label
+              >
+              <div class="actions">
+                <button id="cancel-ai" type="button" class="secondary" hidden>
+                  Interromper</button
+                ><button id="ask" type="submit">Enviar mensagem ↑</button>
+              </div>
+            </div>
+            <p id="chat-status" class="muted" role="status">
+              Enter envia · Shift + Enter insere uma linha. Não é preciso selecionar em
+              Explorar.
+            </p>
+          </form>
+          <p class="chat-privacy muted">
+            Conversas salvas neste computador por perfil. Ao continuar, o contexto recente
+            é enviado à OpenAI. Registros de contato e anotações não são enviados
+            automaticamente.
+          </p>
         </div>
       </section>
       <section id="settings" class="pane" hidden>
@@ -260,6 +303,21 @@
           <div id="history"></div>
         </div>
         <div class="panel">
+          <h2>Conversas e contatos</h2>
+          <p>
+            Backup separado dos favoritos, salvo somente neste computador. Pode conter
+            informações pessoais.
+          </p>
+          <div class="actions">
+            <button id="export-workspace" class="secondary">
+              Exportar conversas e contatos</button
+            ><label class="file-button"
+              >Importar histórico<input
+                id="import-workspace"
+                type="file"
+                accept="application/json,.json" /></label
+            ><button id="reload-workspace" class="secondary">Recarregar histórico</button>
+          </div>
           <h2>Sobre seus dados</h2>
           <p>
             A coleção conectada pertence ao perfil local ou à conta ChatGPT selecionada.
@@ -300,6 +358,82 @@
         <button id="close-provider" class="secondary" type="button">Fechar</button>
       </div>
       <div id="provider-details"></div>
+      <section id="provider-contacts">
+        <div class="resultbar">
+          <h3>Histórico de contatos</h3>
+          <button id="new-contact" type="button">Registrar contato</button>
+        </div>
+        <p class="muted">
+          Registro pessoal das suas tratativas. Não envia mensagens ao prestador nem à IA.
+        </p>
+        <div id="contact-list"></div>
+      </section>
+    </dialog>
+    <dialog id="chat-editor">
+      <form id="chat-editor-form">
+        <h2>Organizar conversa</h2>
+        <label>Nome<input id="chat-title" maxlength="120" required /></label>
+        <label
+          >Cor<select id="chat-color">
+            <option value="green">Verde</option>
+            <option value="blue">Azul</option>
+            <option value="purple">Roxo</option>
+            <option value="orange">Laranja</option>
+            <option value="rose">Rosa</option>
+            <option value="gray">Cinza</option>
+          </select></label
+        >
+        <label
+          >Tags, separadas por vírgula<input
+            id="chat-tags"
+            maxlength="490"
+            placeholder="Ortodontia, filhos, Asa Sul"
+        /></label>
+        <label
+          >Vincular prestador<select id="chat-provider">
+            <option value="">Sem novo vínculo</option>
+          </select></label
+        >
+        <div id="chat-linked-providers"></div>
+        <div class="actions">
+          <button type="submit">Salvar</button
+          ><button id="close-chat-editor" type="button" class="secondary">Cancelar</button
+          ><button id="delete-chat" type="button" class="danger">Excluir conversa</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="contact-editor">
+      <form id="contact-form">
+        <h2 id="contact-title">Registrar contato</h2>
+        <label
+          >Data e hora<input id="contact-date" type="datetime-local" required
+        /></label>
+        <label
+          >Nome do atendente<input
+            id="contact-person"
+            maxlength="120"
+            placeholder="Opcional"
+        /></label>
+        <label>Canal<select id="contact-channel"></select></label>
+        <label>Situação<select id="contact-status"></select></label>
+        <label
+          >O que foi tratado?<textarea
+            id="contact-note"
+            rows="5"
+            maxlength="6000"
+            required
+            placeholder="Disponibilidade, retorno combinado, orientações recebidas..."
+          ></textarea>
+        </label>
+        <label>Conversa relacionada<select id="contact-chat"></select></label>
+        <div class="actions">
+          <button type="submit">Salvar registro</button
+          ><button id="close-contact" type="button" class="secondary">Cancelar</button
+          ><button id="delete-contact" type="button" class="danger" hidden>
+            Excluir registro
+          </button>
+        </div>
+      </form>
     </dialog>
     <dialog id="edit-dialog">
       <form method="dialog">

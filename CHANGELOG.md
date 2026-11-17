@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0 - 2026-11-17
+
+- Chat com rolagem própria, compositor separado e navegação por conversas em desktop e celular.
+- Histórico persistente por perfil: retomada, renomeação, cores, tags, vínculos com prestadores e rascunhos.
+- Registros pessoais de contatos por prestador, com data, atendente, canal, situação e conversa relacionada.
+- Backup de conversas/contatos, validação de dados, revisão para conflitos entre janelas e preservação dos favoritos.
+- Testes de persistência, isolamento e fluxo de interface no Chromium antes da publicação dos pacotes.
+
 ## 0.2.1 - 2026-11-17
 
 Corrige a consolidação de respostas em streaming: um evento final com `output` vazio ou parcial não apaga as ferramentas recebidas anteriormente. Reconstrói argumentos de função, recupera texto final sem deltas e evita duplicação de texto e chamadas. Falhas tardias e respostas realmente vazias permanecem explícitas, com diagnóstico estrutural sem conteúdo pessoal ou credenciais. Inclui regressão de pesquisa de ortodontia na Asa Sul.

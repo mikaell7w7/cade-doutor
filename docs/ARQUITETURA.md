@@ -12,7 +12,7 @@ A Responses API é chamada com `store:false` e `stream:true`. O parser consolida
 
 O assistente usa ferramentas de função no namespace `catalog`: `search_catalog` (filtros e paginação de até 50 unidades) e `get_providers` (IDs oficiais). O escopo padrão cobre todas as unidades; o escopo opcional de seleção é imposto no servidor. Cada mensagem começa por uma consulta ao catálogo. As respostas e itens de raciocínio retornados, inclusive conteúdo criptografado, são preservados na continuação stateless dentro da mensagem, acompanhados dos `function_call_output` correspondentes. Não há ferramenta de shell, gravação pessoal ou leitura de credenciais. A pesquisa web é opt-in e fica disponível depois da primeira consulta local.
 
-Cada mensagem tem limite de nove rodadas de inferência, 24 chamadas de função e quatro minutos, além da consulta inicial de modelos. A última rodada solicita uma síntese com pendências explícitas. A busca não afirma completude quando faltam páginas. O servidor valida o histórico (20 trocas completas, 120 mil caracteres totais) e prende as chamadas à conta ativa. O navegador descarta histórico ao trocar de conta e exclui respostas interrompidas do próximo pedido. Conversas permanecem apenas na memória da página.
+Cada mensagem tem limite de nove rodadas de inferência, 24 chamadas de função e quatro minutos, além da consulta inicial de modelos. A última rodada solicita uma síntese com pendências explícitas. A busca não afirma completude quando faltam páginas. O servidor valida o histórico (20 trocas completas, 120 mil caracteres totais) e prende as chamadas à conta ativa. O navegador troca o histórico visível ao mudar de conta e exclui respostas interrompidas do próximo pedido. Conversas são persistidas no serviço local por perfil; somente o contexto recente é enviado à IA.
 
 Markdown é interpretado como tokens e convertido em nós DOM por uma lista permitida, sem `innerHTML`. HTML bruto aparece como texto; links externos aceitam somente HTTP(S). Links de ficha usam IDs do catálogo atual, nunca HTML ou comandos da resposta. Cartões exibidos pelo streaming vêm das ferramentas locais; não são montados a partir de dados inventados pelo modelo.
 
@@ -27,3 +27,11 @@ O MCP usa stdio, com servidor e dependências empacotados. Expõe apenas ferrame
 ## Pontos de expansão
 
 Adaptadores por operadora; IDs nativos quando disponíveis; sincronização privada opt-in; instalação desktop assinada; mapa progressivo com correspondências revisadas; integração remota independente, respeitando as condições do fluxo de autenticação aplicável.
+
+## Conversas e contatos
+
+`/api/workspace` lê e grava `workspace-{perfil}.json`, separado dos favoritos. Cada gravação valida estrutura e tamanho, perfil ativo e revisão, e usa transação serializada e troca atômica de arquivo. O cliente serializa autosaves e mudanças de metadados/contatos; conflito mantém uma cópia local exportável e exige recarga explícita, sem sobrescrever outro navegador silenciosamente.
+
+Conversas guardam título, cor de uma lista permitida, tags, IDs de prestadores, rascunho e mensagens. Estados pendentes reabrem como interrompidos. Contatos guardam nome/endereço do prestador, data, atendente, canal, situação, anotação e vínculo opcional com uma conversa. Excluir conversa preserva os contatos e remove somente seu vínculo. Nenhuma dessas operações é uma ferramenta da IA.
+
+O chat usa um painel com altura limitada pela viewport e rolagem própria. O compositor é uma região separada, sem posicionamento sobre o conteúdo. Rolagem automática acompanha a resposta somente perto do final; há botão para voltar à última mensagem. No celular, a lista de conversas alterna com a área da conversa.

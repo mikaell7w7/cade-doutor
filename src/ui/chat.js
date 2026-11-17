@@ -1,4 +1,5 @@
 import { renderMarkdown } from "./markdown.js";
+import { conversationContext } from "../core/workspace.js";
 
 export function createAssistant({
   base,
@@ -9,6 +10,9 @@ export function createAssistant({
   renderCard,
   openProvider,
   notice,
+  beforeSubmit = async () => {},
+  saveChat = async () => {},
+  scheduleSave = () => {},
 }) {
   const $ = (s) => document.querySelector(s);
   let turns = [],
@@ -29,7 +33,7 @@ export function createAssistant({
   function fillQuestion(text) {
     $("#question").value = text;
     $("#question").focus();
-    $("#question").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    scheduleSave();
   }
   function clear() {
     generation++;
@@ -55,7 +59,7 @@ export function createAssistant({
     turn.results.hidden = !units.length;
     turn.more.hidden = units.length <= turn.limit;
   }
-  function addTurn(question) {
+  function addTurn(question, scroll = true) {
     const user = document.createElement("article");
     user.className = "chat-user";
     user.textContent = question;
@@ -82,7 +86,7 @@ export function createAssistant({
       cards = document.createElement("div"),
       more = document.createElement("button");
     results.hidden = true;
-    results.open = true;
+    results.open = false;
     results.className = "chat-providers";
     cards.className = "cards";
     more.type = "button";
@@ -98,6 +102,8 @@ export function createAssistant({
     copy.hidden = true;
     const turn = {
       question,
+      createdAt: new Date().toISOString(),
+      providerIds: [],
       text: "",
       state: "pending",
       providers: new Map(),
@@ -130,7 +136,7 @@ export function createAssistant({
     $("#chat-log").append(user, root);
     $("#chat-empty").hidden = true;
     turns.push(turn);
-    user.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (scroll) latest();
     return turn;
   }
   async function submit(event) {
@@ -161,12 +167,23 @@ export function createAssistant({
       notice("Escolha Todo o catálogo para pesquisar sem selecionar prestadores.");
       return;
     }
-    const history = turns
-      .filter((t) => t.state === "completed")
-      .flatMap((t) => [
-        { role: "user", content: t.question },
-        { role: "assistant", content: t.text },
-      ]);
+    const { history, omitted } = conversationContext(turns, question);
+    if (turns.length >= 200) {
+      notice(
+        "Esta conversa chegou a 200 mensagens. Crie uma nova conversa para continuar.",
+      );
+      return;
+    }
+    const preparing = generation;
+    busyState(true);
+    try {
+      await beforeSubmit(question);
+    } catch (e) {
+      busyState(false);
+      notice(e.message);
+      return;
+    }
+    if (preparing !== generation || getAccount() !== currentAccount) return;
     const turn = addTurn(question),
       id = ++generation;
     aborter = new AbortController();
@@ -177,9 +194,14 @@ export function createAssistant({
     let frame = null;
     const paint = () => {
       frame = null;
+      const follow = nearBottom();
       renderMarkdown(turn.body, turn.text, openProvider);
+      if (follow) latest();
+      else $("#latest-message").hidden = false;
     };
     try {
+      await saveChat();
+      if (id !== generation) return;
       const r = await fetch(base + "/api/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Cade-Session": getSession() },
@@ -232,6 +254,7 @@ export function createAssistant({
           }
           if (e.delta) {
             turn.text += e.delta;
+            scheduleSave();
             if (frame === null) frame = requestAnimationFrame(paint);
           }
           if (e.done) done = true;
@@ -241,8 +264,9 @@ export function createAssistant({
       if (!done) throw new Error("Resposta interrompida antes da conclusão.");
       turn.state = "completed";
       turn.progress.textContent = "Pesquisa concluída. Continue a conversa para refinar.";
-      $("#chat-status").textContent =
-        "Faça uma pergunta complementar. O contexto desta conversa será mantido.";
+      $("#chat-status").textContent = omitted
+        ? `Conversa salva. A IA recebeu as últimas ${history.length / 2} trocas; mensagens anteriores continuam no histórico.`
+        : "Conversa salva. Continue a pesquisa quando quiser.";
     } catch (e) {
       if (id === generation) {
         turn.state = "failed";
@@ -267,9 +291,28 @@ export function createAssistant({
         turn.copy.hidden = !turn.text;
         busyState(false);
         $("#question").focus();
+        try {
+          await saveChat();
+        } catch (e) {
+          notice("A conversa permanece na tela, mas não foi salva: " + e.message);
+        }
       }
     }
   }
+  const nearBottom = () => {
+    const el = $("#chat-scroll");
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+  };
+  function latest() {
+    const el = $("#chat-scroll");
+    el.scrollTop = el.scrollHeight;
+    $("#latest-message").hidden = true;
+  }
+  $("#latest-message").onclick = latest;
+  $("#chat-scroll").onscroll = () => {
+    $("#latest-message").hidden = nearBottom();
+  };
+  $("#question").addEventListener("input", scheduleSave);
   $("#chat-form").addEventListener("submit", submit);
   $("#question").addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
@@ -287,6 +330,44 @@ export function createAssistant({
   };
   return {
     submit,
+    isBusy: () => busy,
+    capture: () => ({
+      draft: $("#question").value,
+      turns: turns.map((t) => ({
+        question: t.question,
+        text: t.text,
+        state: t.state,
+        createdAt: t.createdAt,
+        providerIds: [...new Set([...t.providerIds, ...t.providers.keys()])],
+      })),
+    }),
+    restore(chat) {
+      clear();
+      for (const saved of chat?.turns ?? []) {
+        const t = addTurn(saved.question, false);
+        t.text = saved.text;
+        t.createdAt = saved.createdAt;
+        t.providerIds = saved.providerIds;
+        t.state = saved.state === "pending" ? "failed" : saved.state;
+        for (const id of saved.providerIds) {
+          const u = getCatalog()?.units.find((u) => u.id === id);
+          if (u) t.providers.set(id, u);
+        }
+        renderMarkdown(t.body, t.text, openProvider);
+        renderCards(t);
+        t.copy.hidden = !t.text;
+        t.progress.textContent =
+          t.state === "completed"
+            ? "Resposta salva"
+            : "Resposta interrompida; não entra no contexto da IA.";
+        if (t.state !== "completed") t.progress.classList.add("chat-error");
+      }
+      $("#question").value = chat?.draft ?? "";
+      $("#chat-status").textContent = chat
+        ? "Histórico carregado. Continue esta conversa quando quiser."
+        : "Nova conversa. O histórico será salvo ao enviar a primeira mensagem.";
+      latest();
+    },
     refreshCards,
     resetForAccount(key) {
       if (account !== key) {

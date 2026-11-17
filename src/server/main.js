@@ -9,6 +9,7 @@ import { Auth } from "./auth.js";
 import { ask, listModels, resolveScope } from "./inference.js";
 import { loadCatalog, replaceCatalog, bundledCatalog } from "./catalog-store.js";
 import { validatePersonal } from "../core/catalog.js";
+import { emptyWorkspace, validateWorkspace } from "../core/workspace.js";
 import { Maps } from "./maps.js";
 
 export function validOrigin(origin, base) {
@@ -107,7 +108,7 @@ export async function createApp({
         return;
       }
       if (u.pathname === "/api/health") {
-        json(res, 200, { name: "Cadê Doutor", version: "0.2.1" });
+        json(res, 200, { name: "Cadê Doutor", version: "0.3.0" });
         return;
       }
       if (u.pathname === "/api/pair" && req.method === "POST") {
@@ -184,6 +185,37 @@ export async function createApp({
         }
         if (u.pathname === "/api/history" && req.method === "GET") {
           json(res, 200, await store.read("catalog-history.json", []));
+          return;
+        }
+        if (u.pathname === "/api/workspace" && req.method === "GET") {
+          const path = (await personalPath()).replace(/^personal-/, "workspace-");
+          json(res, 200, {
+            ...(await store.read(path, emptyWorkspace())),
+            profile: path,
+          });
+          return;
+        }
+        if (u.pathname === "/api/workspace" && req.method === "PUT") {
+          const body = await readJSON(req, 8_100_000),
+            clean = validateWorkspace(body);
+          const path = (await personalPath()).replace(/^personal-/, "workspace-");
+          let result;
+          await store.transaction(async () => {
+            if (body.profile !== path)
+              throw new Error(
+                "O perfil mudou. Reabra a conexão antes de salvar o histórico.",
+              );
+            const current = await store.read(path, emptyWorkspace());
+            if (clean.revision !== current.revision)
+              throw new Error(
+                "Histórico alterado em outra janela. Exporte as alterações pendentes antes de atualizar a conexão.",
+              );
+            if ((await personalPath()).replace(/^personal-/, "workspace-") !== path)
+              throw new Error("O perfil mudou. O histórico não foi salvo.");
+            result = { ...clean, revision: current.revision + 1 };
+            await store.write(path, result);
+          });
+          json(res, 200, { ...result, profile: path });
           return;
         }
         if (u.pathname === "/api/personal" && req.method === "GET") {
