@@ -41,6 +41,7 @@ export function careRows(
               name: latest.providerName,
               address: latest.providerAddress,
               phones: [],
+              sites: [],
               specialties: [],
               types: [],
             }
@@ -49,6 +50,7 @@ export function careRows(
               name: "Prestador fora do catálogo · " + id,
               address: "Endereço não disponível",
               phones: [],
+              sites: [],
               specialties: [],
               types: [],
             });

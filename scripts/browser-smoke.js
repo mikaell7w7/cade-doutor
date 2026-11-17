@@ -177,6 +177,7 @@ try {
   assert(
     (await page.locator("#care-timeline").textContent()).includes("Retorno confirmado"),
   );
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: "ui-results/prestadores.png", fullPage: true });
   await page.getByRole("button", { name: "Explorar", exact: true }).click();
   await page.locator("#query").fill("ortodontia");
@@ -209,6 +210,7 @@ try {
     document.querySelector("#history-state").textContent.includes("salvas neste"),
   );
   await page.locator("#new-chat").click();
+  await page.waitForFunction(() => document.querySelector("#scope").value === "catalog");
   assert.equal(await page.locator("#scope").inputValue(), "catalog");
   await page.reload();
   await page.locator(".chat-list-item").filter({ hasText: "Comparação de 2" }).click();

@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { careRows } from "../src/core/care.js";
+import { validatePersonal } from "../src/core/catalog.js";
 import { emptyWorkspace } from "../src/core/workspace.js";
 const unit = (id) => ({
   id,
@@ -86,5 +87,31 @@ test("personal collection combines intentional links, latest contact and favorit
   assert.equal(
     rows.find((r) => r.unit.id === "contact-only").unit.name,
     "Clínica histórica",
+  );
+});
+
+test("a historical contact outside the catalogue can still be saved as a favorite", () => {
+  const [r] = careRows(
+    { units: [] },
+    {},
+    {
+      ...emptyWorkspace(),
+      contacts: [
+        {
+          providerId: "historical-unit",
+          providerName: "Clínica",
+          providerAddress: "Gama",
+          date: "2026-11-17T12:00:00Z",
+        },
+      ],
+    },
+  );
+  assert.doesNotThrow(() =>
+    validatePersonal({
+      schemaVersion: 1,
+      favorites: {
+        [r.unit.id]: { snapshot: r.unit, savedAt: "2026-11-17", note: "", list: "" },
+      },
+    }),
   );
 });
