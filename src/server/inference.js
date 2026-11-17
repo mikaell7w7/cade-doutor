@@ -3,74 +3,8 @@ import {
   executeCatalogTool,
   validateConversation,
 } from "./catalog-tools.js";
-export async function consumeSSE(stream, onDelta = () => {}, onComplete = () => {}) {
-  const decoder = new TextDecoder(),
-    sources = new Map(),
-    output = new Map();
-  let buffer = "",
-    result = "",
-    completed = false;
-  for await (const chunk of stream) {
-    buffer += decoder.decode(chunk, { stream: true });
-    buffer = buffer.replace(/\r\n/g, "\n");
-    let pos;
-    while ((pos = buffer.indexOf("\n\n")) !== -1) {
-      const packet = buffer.slice(0, pos);
-      buffer = buffer.slice(pos + 2);
-      const json = packet
-        .split("\n")
-        .filter((l) => l.startsWith("data:"))
-        .map((l) => l.slice(5).trimStart())
-        .join("\n");
-      if (!json || json === "[DONE]") continue;
-      const event = JSON.parse(json);
-      if (event.type === "response.output_text.delta") {
-        result += event.delta;
-        onDelta(event.delta);
-      }
-      if (
-        event.type === "response.output_text.annotation.added" &&
-        event.annotation?.type === "url_citation"
-      ) {
-        const a = event.annotation;
-        try {
-          const u = new URL(a.url);
-          if (u.protocol === "https:" || u.protocol === "http:")
-            sources.set(u.href, a.title ?? u.href);
-        } catch {}
-      }
-      if (["response.failed", "response.incomplete", "error"].includes(event.type)) {
-        const code = event.response?.error?.code ?? event.code ?? event.type;
-        throw new Error(
-          [
-            "subscription_sharing_usage_limit_exceeded",
-            "subscription_sharing_usage_unavailable",
-          ].includes(code)
-            ? "Limite do plano atingido. Gerencie o uso nas configurações do ChatGPT."
-            : "A resposta da IA não foi concluída.",
-        );
-      }
-      if (event.type === "response.output_item.done")
-        output.set(event.output_index, event.item);
-      if (event.type === "response.completed") {
-        completed = true;
-        onComplete(
-          event.response?.output ??
-            [...output.entries()].sort((a, b) => a[0] - b[0]).map((x) => x[1]),
-        );
-      }
-    }
-  }
-  if (!completed) throw new Error("A conexão terminou antes de concluir a resposta.");
-  if (sources.size) {
-    const text =
-      "\n\nFontes consultadas:\n" +
-      [...sources].map(([url, title]) => title + "\n" + url).join("\n\n");
-    result += text;
-    onDelta(text);
-  }
-  return result;
-}
+import { consumeSSE } from "./response-stream.js";
+export { consumeSSE } from "./response-stream.js";
 export async function listModels(auth, fetchFn = fetch) {
   const token = await auth.access();
   const r = await fetchFn("https://api.openai.com/v1/models", {
@@ -187,7 +121,8 @@ Apresente resposta objetiva, Markdown legível, tabelas com poucas colunas e lin
       throw new Error(
         `A OpenAI recusou a pesquisa (HTTP ${response.status}). Verifique o modelo, a sessão e os limites da conta.`,
       );
-    let output = [];
+    let output = [],
+      diagnostic;
     if (completeText && !completeText.endsWith("\n")) {
       onDelta("\n\n");
       completeText += "\n\n";
@@ -198,15 +133,16 @@ Apresente resposta objetiva, Markdown legível, tabelas com poucas colunas e lin
         completeText += delta;
         onDelta(delta);
       },
-      (items) => {
+      (items, summary) => {
         output = items;
+        diagnostic = summary;
       },
     );
     const calls = output.filter((item) => item.type === "function_call");
     if (!calls.length) {
       if (!text.trim())
         throw new Error(
-          "O modelo encerrou sem uma resposta. Tente outro modelo ou reformule a pesquisa.",
+          `A consulta terminou sem texto ou chamada de ferramenta utilizável. Diagnóstico SSE: eventos=${diagnostic?.events ?? 0}, itens=${output.length}, chamadas=${diagnostic?.calls ?? 0}, raciocínio=${diagnostic?.reasoning ?? 0}. Use Reutilizar pergunta para tentar novamente; se persistir, informe este diagnóstico.`,
         );
       return completeText;
     }

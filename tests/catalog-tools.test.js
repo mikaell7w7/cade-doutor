@@ -217,3 +217,77 @@ test("cancelled research cannot proceed to another model request", async () => {
   );
   assert.equal(calls, 1);
 });
+
+test("Asa Sul search continues from streamed function items when completed.output is empty", async () => {
+  let round = 0;
+  const requests = [],
+    events = [];
+  let output = "";
+  await ask(
+    { access: async () => "fixture" },
+    {
+      model: "fixture",
+      question: "Preciso de um ortodontista na região da Asa Sul",
+      catalog,
+    },
+    (s) => {
+      output += s;
+    },
+    async (url, options) => {
+      if (url.endsWith("/models")) return modelResponse();
+      requests.push(JSON.parse(options.body));
+      if (round++ === 0) {
+        const item = { ...call(args({ region: "Asa Sul" })), id: "fc_asa_sul" };
+        return new Response(
+          evt({
+            type: "response.output_item.added",
+            output_index: 0,
+            item: { ...item, arguments: "" },
+          }) +
+            evt({
+              type: "response.function_call_arguments.done",
+              output_index: 0,
+              item_id: item.id,
+              arguments: item.arguments,
+            }) +
+            evt({ type: "response.output_item.done", output_index: 0, item }) +
+            evt({ type: "response.completed", response: { output: [] } }),
+        );
+      }
+      return stream([
+        {
+          type: "message",
+          role: "assistant",
+          content: [
+            { type: "output_text", text: "Encontrei opções de ortodontia na Asa Sul." },
+          ],
+        },
+      ]);
+    },
+    (e) => events.push(e),
+  );
+  assert.equal(round, 2);
+  assert.match(output, /ortodontia na Asa Sul/);
+  const toolOutput = requests[1].input.filter((i) => i.type === "function_call_output");
+  assert.equal(toolOutput.length, 1);
+  const result = JSON.parse(toolOutput[0].output);
+  assert(result.total > 0);
+  assert(result.units.every((u) => normalize(u.address).includes("asa sul")));
+  assert(events.some((e) => e.providers?.length));
+});
+
+test("genuinely empty responses report structural diagnostics without prompt or credentials", async () => {
+  await assert.rejects(
+    ask(
+      { access: async () => "private-fixture-token" },
+      { model: "fixture", question: "private-fixture-question", catalog },
+      () => {},
+      async (url) => (url.endsWith("/models") ? modelResponse() : stream([])),
+    ),
+    (error) => {
+      assert.match(error.message, /Diagnóstico SSE: eventos=1, itens=0, chamadas=0/);
+      assert(!error.message.includes("private-fixture"));
+      return true;
+    },
+  );
+});

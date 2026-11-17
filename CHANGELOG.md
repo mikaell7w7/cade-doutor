@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 - 2026-11-17
+
+Corrige a consolidação de respostas em streaming: um evento final com `output` vazio ou parcial não apaga as ferramentas recebidas anteriormente. Reconstrói argumentos de função, recupera texto final sem deltas e evita duplicação de texto e chamadas. Falhas tardias e respostas realmente vazias permanecem explícitas, com diagnóstico estrutural sem conteúdo pessoal ou credenciais. Inclui regressão de pesquisa de ortodontia na Asa Sul.
+
 ## 0.2.0 - 2026-11-17
 
 - Assistente como tela inicial, com busca em todo o catálogo sem seleção prévia em Explorar.
