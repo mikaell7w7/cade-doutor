@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Mapa · Cadê Doutor</title>
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/"
+        ><span class="logo">+</span
+        ><span
+          >Cadê Doutor<small>Escolha onde quer cuidar de você</small></span
+        ></a
+      ><a href="/">Voltar ao catálogo</a>
+    </header>
+    <main>
+      <p id="notice" role="status" aria-live="polite"></p>
+      <section class="panel" id="pair-panel">
+        <h2>Conectar este mapa</h2>
+        <p>
+          Informe o código do aplicativo local. A localização só é consultada
+          quando você solicita.
+        </p>
+        <label
+          >Código<input
+            id="pair-code"
+            type="password"
+            autocomplete="off" /></label
+        ><button id="pair">Conectar</button>
+      </section>
+      <section class="panel">
+        <div class="filters">
+          <label
+            >Partir de CEP ou endereço<input
+              id="origin"
+              placeholder="CEP, cidade ou endereço preferido" /></label
+          ><button id="find-origin">Buscar origem</button
+          ><button id="locate" class="secondary">Usar minha localização</button>
+        </div>
+        <div id="origin-options"></div>
+        <p id="origin-label">Origem não definida.</p>
+        <div class="filters">
+          <label
+            >Prestador ou região preferida<input
+              id="query"
+              type="search"
+              placeholder="Ex.: Valparaíso, Asa Sul ou nome" /></label
+          ><label
+            >Atendimento<select id="type">
+              <option value="">Todos</option>
+              <option value="dental">Odontológico</option>
+              <option value="medical">Médico</option>
+              <option value="hospital">Hospital</option>
+            </select></label
+          ><label
+            >Ordenar unidades confirmadas<select id="sort">
+              <option value="distance">Proximidade em linha reta</option>
+              <option value="rating">Nota Google</option>
+              <option value="reviews">Quantidade de avaliações</option>
+            </select></label
+          >
+        </div>
+        <p class="muted">
+          A lista mostra o catálogo completo filtrado. O mapa e a ordenação usam
+          apenas unidades cujo endereço você confirmou no Google. Nota de
+          pacientes não mede qualificação técnica. Rotas são consultadas
+          separadamente.
+        </p>
+      </section>
+      <div class="map-layout">
+        <section>
+          <p id="count"></p>
+          <div id="map-results"></div>
+          <button id="more" class="secondary">Mostrar mais</button>
+        </section>
+        <section>
+          <div id="map" role="region" aria-label="Mapa Google de prestadores">
+            <p class="empty">
+              Configure as chaves Google Maps no aplicativo local para habilitar
+              o mapa, localização, avaliações e rotas. As APIs podem gerar
+              cobrança.
+            </p>
+          </div>
+          <p id="coverage" class="muted"></p>
+        </section>
+      </div>
+    </main>
+    <p class="muted" style="text-align: center">
+      <a
+        href="https://github.com/mikaell7w7/cade-doutor/blob/main/docs/PRIVACIDADE.md"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Privacidade</a
+      >
+      ·
+      <a
+        href="https://github.com/mikaell7w7/cade-doutor/blob/main/docs/TERMOS.md"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Termos de uso</a
+      >
+    </p>
+    <script type="module" src="map.js"></script>
+  </body>
+</html>

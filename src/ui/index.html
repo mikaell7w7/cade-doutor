@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Cadê Doutor</title>
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="#"
+        ><span class="logo" aria-hidden="true">+</span
+        ><span>Cadê Doutor<small>Sua rede de cuidado</small></span></a
+      ><span class="version">PRÉVIA 0.1</span>
+    </header>
+    <nav aria-label="Navegação">
+      <button data-tab="explore" class="active">Explorar</button
+      ><button data-tab="favorites">
+        Favoritos <span id="fav-count">0</span></button
+      ><button data-tab="ai">Assistente IA</button
+      ><button data-tab="settings">Conexão</button>
+    </nav>
+    <main>
+      <p id="notice" role="status" aria-live="polite"></p>
+      <section id="explore" class="pane">
+        <div class="intro">
+          <p class="eyebrow">REDE CREDENCIADA</p>
+          <h1>Encontre o cuidado<br />que faz sentido para você.</h1>
+          <p>
+            Pesquise prestadores, compare opções e mantenha sua lista pessoal.
+          </p>
+        </div>
+        <div class="source">
+          <span id="source-label">Carregando catálogo…</span
+          ><a
+            href="https://app.tstsaude.tst.jus.br/"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Fonte oficial ↗</a
+          >
+        </div>
+        <div class="filters">
+          <label
+            >O que você procura?<input
+              id="query"
+              type="search"
+              placeholder="Nome, especialidade ou região"
+              autocomplete="off" /></label
+          ><label
+            >Atendimento<select id="type">
+              <option value="">Todos</option>
+              <option value="dental">Odontológico</option>
+              <option value="medical">Médico</option>
+              <option value="hospital">Hospital</option>
+            </select></label
+          ><label
+            >Especialidade<select id="specialty">
+              <option value="">Todas as especialidades</option>
+            </select></label
+          >
+        </div>
+        <div class="resultbar">
+          <b id="result-count"></b
+          ><button id="open-map" class="secondary">Abrir mapa ↗</button>
+        </div>
+        <p class="muted">
+          Mapa, rotas e avaliações usam serviços de localização configurados no
+          aplicativo local. Nenhuma nota ou distância é presumida.
+        </p>
+        <div id="results" class="cards"></div>
+        <button id="more" class="secondary">Mostrar mais</button>
+      </section>
+      <section id="favorites" class="pane" hidden>
+        <div class="intro">
+          <p class="eyebrow">MINHA COLEÇÃO</p>
+          <h1>Os seus próximos cuidados.</h1>
+          <p>
+            Favoritos preservados, mesmo quando uma unidade deixa de aparecer no
+            catálogo.
+          </p>
+        </div>
+        <label
+          >Filtrar minha lista<input
+            id="favorite-query"
+            type="search"
+            placeholder="Nome da lista, prestador ou anotação"
+        /></label>
+        <div class="actions">
+          <button id="export-personal" class="secondary">
+            Exportar backup pessoal</button
+          ><label class="file-button"
+            >Importar backup<input
+              id="import-personal"
+              type="file"
+              accept="application/json,.json"
+          /></label>
+        </div>
+        <div id="favorite-results" class="cards"></div>
+      </section>
+      <section id="ai" class="pane" hidden>
+        <div class="intro">
+          <p class="eyebrow">ASSISTENTE PESSOAL</p>
+          <h1>Compare antes de escolher.</h1>
+          <p>
+            Converse sobre os prestadores selecionados usando seu plano do
+            ChatGPT.
+          </p>
+        </div>
+        <div id="selection"></div>
+        <p class="muted">
+          A consulta envia sua pergunta e os dados públicos dos prestadores
+          selecionados à OpenAI. Anotações e favoritos não são enviados
+          automaticamente.
+        </p>
+        <label
+          >Modelo da sua conta<select id="model">
+            <option value="">Conecte sua conta para carregar</option>
+          </select></label
+        ><label
+          >Sua pergunta<textarea
+            id="question"
+            rows="4"
+            placeholder="Compare estas clínicas. Verifique avaliações e confira se os endereços correspondem à mesma unidade."
+          ></textarea></label
+        ><label class="check"
+          ><input type="checkbox" id="web-search" /> Pesquisar na web, se
+          disponível para este modelo e conta</label
+        >
+        <div class="actions">
+          <button id="ask">Comparar com IA</button
+          ><button id="cancel-ai" class="secondary" hidden>
+            Interromper leitura
+          </button>
+        </div>
+        <p id="plan-indicator" class="muted"></p>
+        <a
+          href="https://chatgpt.com/settings/usage"
+          target="_blank"
+          rel="noopener noreferrer"
+          >Gerenciar uso do ChatGPT ↗</a
+        >
+        <article id="answer" aria-live="polite"></article>
+      </section>
+      <section id="settings" class="pane" hidden>
+        <div class="intro">
+          <p class="eyebrow">CONEXÃO E DADOS</p>
+          <h1>Seu controle, sua conta.</h1>
+        </div>
+        <div class="panel">
+          <h2>Conectar ao aplicativo local</h2>
+          <p>
+            Inicie o serviço Cadê Doutor no seu computador e informe o código
+            mostrado no terminal. Suas credenciais do ChatGPT permanecem no
+            serviço local.
+          </p>
+          <label
+            >Código de conexão<input
+              id="pair-code"
+              type="password"
+              autocomplete="off"
+              placeholder="Código do aplicativo local" /></label
+          ><button id="pair">Conectar navegador</button>
+          <p id="connection-state" class="muted">Ainda não conectado</p>
+          <p class="muted">
+            Sem conexão, favoritos ficam apenas neste navegador. Ao conectar,
+            será aberta a coleção do perfil local ou da conta selecionada. Use
+            exportação/importação para transferir seus favoritos.
+          </p>
+        </div>
+        <div class="panel">
+          <h2>Usar seu plano do ChatGPT</h2>
+          <p>
+            O Cadê Doutor é gratuito e de código aberto. Consultas elegíveis
+            usam os limites do seu plano ou créditos autorizados na OpenAI.
+          </p>
+          <label
+            >Conta<select id="account">
+              <option value="">Adicionar conta</option>
+            </select></label
+          >
+          <div class="actions">
+            <button id="login" class="chatgpt">Continue with ChatGPT</button
+            ><button id="select-account" class="secondary">
+              Selecionar conta</button
+            ><button id="refresh-auth" class="secondary">
+              Atualizar conexão</button
+            ><button id="logout" class="secondary">Sair da conta</button>
+          </div>
+          <p id="account-state" class="muted">Conta não conectada</p>
+          <a
+            href="https://chatgpt.com/settings/usage"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Gerenciar uso e acesso ↗</a
+          >
+        </div>
+        <div class="panel">
+          <h2>Catálogo e atualizações</h2>
+          <p id="catalog-info"></p>
+          <div class="actions">
+            <button id="update-catalog" class="secondary">
+              Verificar versão no GitHub</button
+            ><label class="file-button"
+              >Importar coleta completa<input
+                id="import-catalog"
+                type="file"
+                accept="application/json,.json" /></label
+            ><button id="export-catalog" class="secondary">
+              Exportar catálogo
+            </button>
+          </div>
+          <p class="muted">
+            Uma atualização só é aceita com categorias e contagens conferidas.
+            Ausência no catálogo não confirma descredenciamento.
+          </p>
+          <div id="history"></div>
+        </div>
+        <div class="panel">
+          <h2>Sobre seus dados</h2>
+          <p>
+            A coleção conectada pertence ao perfil local ou à conta ChatGPT
+            selecionada. Ela é salva neste computador, sem sincronização em
+            nuvem nesta versão. O backup pessoal não contém tokens de
+            autenticação.
+          </p>
+          <p>
+            O projeto é independente do TST, da OpenAI e dos prestadores.
+            Confirme cobertura, atendimento e agenda diretamente com a unidade.
+          </p>
+          <a
+            href="https://github.com/mikaell7w7/cade-doutor"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Código, instalação e documentação ↗</a
+          >
+        </div>
+      </section>
+    </main>
+    <p class="muted" style="text-align: center">
+      <a
+        href="https://github.com/mikaell7w7/cade-doutor/blob/main/docs/PRIVACIDADE.md"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Privacidade</a
+      >
+      ·
+      <a
+        href="https://github.com/mikaell7w7/cade-doutor/blob/main/docs/TERMOS.md"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Termos de uso</a
+      >
+    </p>
+    <dialog id="edit-dialog">
+      <form method="dialog">
+        <h2 id="edit-title"></h2>
+        <label
+          >Lista<input
+            id="edit-list"
+            maxlength="80"
+            placeholder="Ex.: Dentistas para comparar" /></label
+        ><label
+          >Anotação pessoal<textarea
+            id="edit-note"
+            maxlength="3000"
+            rows="5"
+          ></textarea>
+        </label>
+        <div class="actions">
+          <button id="save-note" value="save">Salvar</button
+          ><button value="cancel" class="secondary">Cancelar</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="welcome">
+      <h2>Você está usando seu plano do ChatGPT</h2>
+      <p>
+        Consultas elegíveis do Cadê Doutor usam seu plano ou créditos
+        autorizados. Gerencie os limites nas configurações do ChatGPT.
+      </p>
+      <a
+        href="https://chatgpt.com/settings/usage"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Gerenciar uso ↗</a
+      >
+      <form method="dialog"><button>Entendi</button></form>
+    </dialog>
+    <footer>Cadê Doutor · acesso à saúde com informação e autonomia</footer>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

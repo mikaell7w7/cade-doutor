@@ -1,0 +1,29 @@
+{
+  "name": "cade-doutor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pesquisa pessoal da rede credenciada com Sign in with ChatGPT",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server/main.js",
+    "test": "node --test",
+    "check": "node scripts/check.js",
+    "build": "node scripts/build.js",
+    "package": "npm run build && python3 scripts/package.py",
+    "mcp": "node src/server/mcp.js",
+    "catalog:validate": "node scripts/validate-catalog.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "jose": "6.2.17",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "prettier": "3.6.2"
+  }
+}
