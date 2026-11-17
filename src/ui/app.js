@@ -123,8 +123,7 @@ function card(u, missing = false) {
     const s = document.createElement("span");
     s.className = "tag";
     s.textContent =
-      { dental: "Odontológico", medical: "Médico", hospital: "Hospital" }[t] ??
-      t;
+      { dental: "Odontológico", medical: "Médico", hospital: "Hospital" }[t] ?? t;
     tags.append(s);
   }
   if (missing) {
@@ -180,8 +179,7 @@ function card(u, missing = false) {
       button(selected.has(u.id) ? "✓ Selecionado" : "Comparar", () => {
         if (selected.has(u.id)) selected.delete(u.id);
         else {
-          if (selected.size >= 30)
-            throw new Error("Selecione até 30 prestadores.");
+          if (selected.size >= 30) throw new Error("Selecione até 30 prestadores.");
           selected.add(u.id);
         }
         render();
@@ -218,9 +216,7 @@ function render() {
     " categorias conferidas. Atualização: " +
     catalog.collectedAt +
     ".";
-  $("#results").replaceChildren(
-    ...units.slice(0, pageSize).map((u) => card(u)),
-  );
+  $("#results").replaceChildren(...units.slice(0, pageSize).map((u) => card(u)));
   $("#more").hidden = units.length <= pageSize;
   const fav = favoriteRows(catalog, personal.favorites).filter((f) =>
     normalize([f.unit.name, f.note, f.list].join(" ")).includes(
@@ -233,8 +229,7 @@ function render() {
   if (!fav.length) {
     const p = document.createElement("p");
     p.className = "empty";
-    p.textContent =
-      "Salve seus prestadores para comparar e acompanhar mudanças.";
+    p.textContent = "Salve seus prestadores para comparar e acompanhar mudanças.";
     $("#favorite-results").append(p);
   }
   $("#fav-count").textContent = Object.keys(personal.favorites).length;
@@ -248,8 +243,7 @@ function render() {
     }),
   );
   if (!selected.size)
-    $("#selection").textContent =
-      "Selecione prestadores em Explorar para comparar.";
+    $("#selection").textContent = "Selecione prestadores em Explorar para comparar.";
 }
 function setCatalog(c) {
   catalog = validateCatalog(c);
@@ -302,9 +296,7 @@ async function refresh() {
         `${d.to}: ${d.added.length} novas, ${d.changed.length} alteradas, ${d.missing.length} não localizadas.`,
     )
     .join("\n");
-  $("#model").replaceChildren(
-    new Option("Conecte sua conta para carregar", ""),
-  );
+  $("#model").replaceChildren(new Option("Conecte sua conta para carregar", ""));
   if (active?.connected && active.planEnabled) {
     const models = await api("models");
     $("#model").replaceChildren(...models.map((m) => new Option(m.name, m.id)));
@@ -344,9 +336,7 @@ $("#login").onclick = action(async () => {
     popup?.close();
     throw e;
   }
-  notice(
-    "Conclua o login na página da OpenAI e depois clique em Atualizar conexão.",
-  );
+  notice("Conclua o login na página da OpenAI e depois clique em Atualizar conexão.");
 });
 $("#refresh-auth").onclick = action(refresh);
 $("#select-account").onclick = action(async () => {
@@ -406,8 +396,7 @@ $("#import-catalog").onchange = action(async (e) => {
   e.target.value = "";
 });
 $("#update-catalog").onclick = action(async () => {
-  const root =
-    "https://raw.githubusercontent.com/mikaell7w7/cade-doutor/main/data/";
+  const root = "https://raw.githubusercontent.com/mikaell7w7/cade-doutor/main/data/";
   const r = await fetch(root + "catalog-index.json");
   if (!r.ok) throw new Error("Não foi possível consultar o GitHub.");
   const index = await r.json();
@@ -417,15 +406,13 @@ $("#update-catalog").onclick = action(async () => {
   if (!next.ok) throw new Error("Coleta indisponível.");
   await importCatalog(await next.json());
 });
-$("#export-catalog").onclick = () =>
-  download("cade-doutor-catalogo.json", catalog);
+$("#export-catalog").onclick = () => download("cade-doutor-catalogo.json", catalog);
 $("#open-map").onclick = () => {
   if (ext) chrome.tabs.create({ url: base + "/map.html" });
   else window.open("/map.html", "_blank");
 };
 $("#ask").onclick = action(async () => {
-  if (!selected.size)
-    throw new Error("Selecione pelo menos um prestador para comparar.");
+  if (!selected.size) throw new Error("Selecione pelo menos um prestador para comparar.");
   $("#answer").textContent = "";
   $("#ask").disabled = true;
   aborter = new AbortController();
@@ -469,9 +456,7 @@ $("#ask").onclick = action(async () => {
       }
     }
     if (!done)
-      throw new Error(
-        "Resposta interrompida. O texto parcial não foi concluído.",
-      );
+      throw new Error("Resposta interrompida. O texto parcial não foi concluído.");
     notice("Comparação concluída. Confira as fontes citadas antes de decidir.");
   } catch (e) {
     notice(
@@ -485,12 +470,24 @@ $("#ask").onclick = action(async () => {
   }
 });
 $("#cancel-ai").onclick = () => aborter?.abort();
+if (ext)
+  chrome.storage.onChanged.addListener((changes, area) => {
+    const specialty = changes.context?.newValue?.specialty;
+    if (
+      area === "session" &&
+      specialty &&
+      catalog?.categories.some((c) => c.name === specialty)
+    ) {
+      $("#specialty").value = specialty;
+      pageSize = 24;
+      render();
+    }
+  });
 personal = (await storage.get("personal")) ?? personal;
 try {
   validatePersonal(personal);
   setCatalog(
-    (await storage.get("catalog")) ??
-      (await (await fetch("catalog.json")).json()),
+    (await storage.get("catalog")) ?? (await (await fetch("catalog.json")).json()),
   );
   if (ext) {
     const { context } = await chrome.storage.session.get("context");

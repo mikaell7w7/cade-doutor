@@ -12,7 +12,7 @@ export async function startMcp({
     resolve(dirname(fileURLToPath(import.meta.url)), "../.."),
   store = new Store(),
 } = {}) {
-  const server = new McpServer({ name: "cade-doutor", version: "0.1.0" }),
+  const server = new McpServer({ name: "cade-doutor", version: "0.1.1" }),
     annotations = {
       readOnlyHint: true,
       destructiveHint: false,
@@ -52,8 +52,7 @@ export async function startMcp({
     "get_provider",
     {
       title: "Consultar uma unidade",
-      description:
-        "Dados e especialidades da unidade credenciada no catálogo local.",
+      description: "Dados e especialidades da unidade credenciada no catálogo local.",
       inputSchema: { id: z.string().max(80) },
       annotations,
     },
@@ -76,10 +75,9 @@ export async function startMcp({
     },
     async () => {
       const db = await store.read("accounts.json", { active: null }),
-        personal = await store.read(
-          "personal-" + (db.active ?? "local") + ".json",
-          { favorites: {} },
-        ),
+        personal = await store.read("personal-" + (db.active ?? "local") + ".json", {
+          favorites: {},
+        }),
         c = await loadCatalog(root, store);
       return result({
         collectedAt: c.collectedAt,
@@ -105,23 +103,18 @@ export async function startMcp({
         complete: c.complete,
         units: c.units.length,
         categories: c.categories,
-        history: h
-          .slice(-10)
-          .map((d) => ({
-            from: d.from,
-            to: d.to,
-            added: d.added.length,
-            changed: d.changed.length,
-            notFound: d.missing.length,
-          })),
+        history: h.slice(-10).map((d) => ({
+          from: d.from,
+          to: d.to,
+          added: d.added.length,
+          changed: d.changed.length,
+          notFound: d.missing.length,
+        })),
       });
     },
   );
   await server.connect(new StdioServerTransport());
   return server;
 }
-if (
-  process.argv[1] &&
-  fileURLToPath(import.meta.url) === resolve(process.argv[1])
-)
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]))
   await startMcp();

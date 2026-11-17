@@ -7,18 +7,12 @@ import { randomBytes, timingSafeEqual } from "node:crypto";
 import { Store } from "./store.js";
 import { Auth } from "./auth.js";
 import { ask, listModels } from "./inference.js";
-import {
-  loadCatalog,
-  replaceCatalog,
-  bundledCatalog,
-} from "./catalog-store.js";
+import { loadCatalog, replaceCatalog, bundledCatalog } from "./catalog-store.js";
 import { validatePersonal } from "../core/catalog.js";
 import { Maps } from "./maps.js";
 
 export function validOrigin(origin, base) {
-  return (
-    origin === base || /^chrome-extension:\/\/[a-p]{32}$/.test(origin ?? "")
-  );
+  return origin === base || /^chrome-extension:\/\/[a-p]{32}$/.test(origin ?? "");
 }
 export function constantEqual(a, b) {
   return (
@@ -101,8 +95,7 @@ export async function createApp({
           res.writeHead(200, {
             "Content-Type": "text/html; charset=utf-8",
             "Cache-Control": "no-store",
-            "Content-Security-Policy":
-              "default-src 'none'; style-src 'unsafe-inline'",
+            "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'",
           });
           res.end(
             "<h1>Conta conectada</h1><p>Volte ao Cadê Doutor e clique em Atualizar conexão.</p>",
@@ -113,7 +106,7 @@ export async function createApp({
         return;
       }
       if (u.pathname === "/api/health") {
-        json(res, 200, { name: "Cadê Doutor", version: "0.1.0" });
+        json(res, 200, { name: "Cadê Doutor", version: "0.1.1" });
         return;
       }
       if (u.pathname === "/api/pair" && req.method === "POST") {
@@ -129,8 +122,7 @@ export async function createApp({
           !constantEqual(body.code, pairingCode)
         ) {
           json(res, 403, {
-            error:
-              "Código inválido ou expirado. Reinicie o serviço para gerar outro.",
+            error: "Código inválido ou expirado. Reinicie o serviço para gerar outro.",
           });
           return;
         }
@@ -145,10 +137,7 @@ export async function createApp({
           json(res, 401, { error: "Conecte este navegador ao serviço local." });
           return;
         }
-        if (
-          req.method !== "GET" &&
-          req.headers["content-type"] !== "application/json"
-        ) {
+        if (req.method !== "GET" && req.headers["content-type"] !== "application/json") {
           json(res, 415, { error: "Envie JSON." });
           return;
         }
@@ -189,11 +178,7 @@ export async function createApp({
           return;
         }
         if (u.pathname === "/api/catalog" && req.method === "PUT") {
-          json(
-            res,
-            200,
-            await replaceCatalog(root, store, await readJSON(req)),
-          );
+          json(res, 200, await replaceCatalog(root, store, await readJSON(req)));
           return;
         }
         if (u.pathname === "/api/history" && req.method === "GET") {
@@ -216,9 +201,7 @@ export async function createApp({
           let result;
           await store.transaction(async () => {
             if (body.profile !== path || (await personalPath()) !== path)
-              throw new Error(
-                "O perfil mudou. Atualize a conexão antes de salvar.",
-              );
+              throw new Error("O perfil mudou. Atualize a conexão antes de salvar.");
             const current = await store.read(path, {
               schemaVersion: 1,
               favorites: {},
@@ -278,9 +261,7 @@ export async function createApp({
           });
           const accountKey = (await auth.profiles()).active;
           if (!accountKey) {
-            res.end(
-              JSON.stringify({ error: "Selecione uma conta ChatGPT." }) + "\n",
-            );
+            res.end(JSON.stringify({ error: "Selecione uma conta ChatGPT." }) + "\n");
             return;
           }
           const controller = new AbortController();
@@ -302,9 +283,7 @@ export async function createApp({
           } catch (e) {
             res.end(
               JSON.stringify({
-                error: controller.signal.aborted
-                  ? "Consulta interrompida."
-                  : e.message,
+                error: controller.signal.aborted ? "Consulta interrompida." : e.message,
               }) + "\n",
             );
           } finally {
@@ -336,6 +315,8 @@ export async function createApp({
         json(res, 404, { error: "Não encontrado." });
         return;
       }
+      // Maps browser keys use referrer restrictions. Keep OAuth callbacks private.
+      if (u.pathname === "/map.html") res.setHeader("Referrer-Policy", "origin");
       res.setHeader(
         "Content-Security-Policy",
         "default-src 'self'; script-src 'self' https://maps.googleapis.com https://maps.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.googleapis.com https://*.gstatic.com https://*.google.com https://*.googleusercontent.com; connect-src 'self' https://raw.githubusercontent.com https://*.googleapis.com https://*.gstatic.com; frame-ancestors 'none'; object-src 'none'; base-uri 'self'",
@@ -385,8 +366,5 @@ export async function start(options) {
   process.on("SIGINT", stop);
   process.on("SIGTERM", stop);
 }
-if (
-  process.argv[1] &&
-  fileURLToPath(import.meta.url) === resolve(process.argv[1])
-)
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]))
   await start();

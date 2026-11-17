@@ -1,10 +1,15 @@
-## Cadê Doutor 0.1.0 · prévia técnica
+## Cadê Doutor 0.1.1 · prévia técnica
 
 - Catálogo público TST Saúde: 690 unidades, 131 categorias, coleta de 17/11/2026.
 - Extensão Chrome, aplicativo local e plugin MCP de leitura.
 - Favoritos e anotações pessoais preservados durante atualização do catálogo.
 - Fluxo oficial Continue with ChatGPT, seleção de modelos e comparação por IA.
 - Mapa, CEP, localização, avaliações e rotas Google sob demanda, com confirmação da unidade.
+
+### Correções desta versão
+
+- Compatibilidade da página do mapa com chaves Google restritas por origem.
+- Sincronização do filtro da extensão ao abrir uma categoria no portal.
 
 ### Instalar
 
