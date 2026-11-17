@@ -1,3 +1,5 @@
+import { createCare } from "./care.js";
+import { careRows } from "../core/care.js";
 import { createWorkspace } from "./workspace.js";
 import { createChatHistory } from "./chat-history.js";
 import { createContacts } from "./contacts.js";
@@ -7,7 +9,6 @@ import {
   searchUnits,
   validateCatalog,
   compareCatalogs,
-  favoriteRows,
   validatePersonal,
   normalize,
 } from "../core/catalog.js";
@@ -36,7 +37,8 @@ let session = ext
   status = {},
   assistant,
   chatHistory,
-  contacts;
+  contacts,
+  care;
 const notice = (t) => {
   $("#notice").textContent = t;
 };
@@ -130,6 +132,7 @@ function card(u, missing = false, showDetails = true) {
   for (const t of u.types) {
     const s = document.createElement("span");
     s.className = "tag";
+    s.dataset.type = t;
     s.textContent =
       { dental: "Odontológico", medical: "Médico", hospital: "Hospital" }[t] ?? t;
     tags.append(s);
@@ -184,16 +187,29 @@ function card(u, missing = false, showDetails = true) {
   );
   if (!missing)
     actions.append(
-      button(selected.has(u.id) ? "✓ Selecionado" : "Comparar", () => {
-        if (selected.has(u.id)) selected.delete(u.id);
-        else {
-          if (selected.size >= 30) throw new Error("Selecione até 30 prestadores.");
-          selected.add(u.id);
-        }
-        render();
-      }),
+      button(
+        selected.has(u.id) ? "✓ Na comparação" : "+ Comparar",
+        () => {
+          if (selected.has(u.id)) selected.delete(u.id);
+          else {
+            if (selected.size >= 30) throw new Error("Selecione até 30 prestadores.");
+            selected.add(u.id);
+          }
+          render();
+          chatHistory?.schedule();
+        },
+        "comparison-toggle",
+      ),
     );
-  if (saved) actions.append(button("Anotar", () => showEditor(u)));
+  if (!showDetails && selected.size)
+    actions.append(
+      button(
+        "Revisar comparação (" + selected.size + ")",
+        reviewComparison,
+        "comparison-toggle",
+      ),
+    );
+  if (saved) actions.append(button("Lista e anotações", () => showEditor(u)));
   el.append(tags, h, address, details, phone, links);
   const f = personal.favorites[u.id];
   if (f?.list || f?.note) {
@@ -254,27 +270,22 @@ function render() {
     ".";
   $("#results").replaceChildren(...units.slice(0, pageSize).map((u) => card(u)));
   $("#more").hidden = units.length <= pageSize;
-  const fav = favoriteRows(catalog, personal.favorites).filter((f) =>
-    normalize([f.unit.name, f.note, f.list].join(" ")).includes(
-      normalize($("#favorite-query").value),
-    ),
-  );
-  $("#favorite-results").replaceChildren(
-    ...fav.map((f) => card(f.unit, f.status === "not_found")),
-  );
-  if (!fav.length) {
-    const p = document.createElement("p");
-    p.className = "empty";
-    p.textContent = "Salve seus prestadores para comparar e acompanhar mudanças.";
-    $("#favorite-results").append(p);
-  }
+  care?.render();
   $("#fav-count").textContent = Object.keys(personal.favorites).length;
+  $("#compare-tray").hidden = !selected.size;
+  $("#compare-count").textContent = `${selected.size} prestador(es) na comparação`;
+  $("#chat-context").textContent =
+    $("#scope").value === "selected"
+      ? `Comparação: pesquisa restrita a ${selected.size} prestador(es). Altere em Opções da pesquisa.`
+      : "Pesquisa em todo o catálogo · selecione prestadores apenas se quiser comparar opções específicas";
+  $("#chat-context").dataset.mode = $("#scope").value;
   $("#selection").replaceChildren(
     ...[...selected].map((id) => {
       const u = catalog.units.find((u) => u.id === id);
       return button((u?.name ?? id) + " ×", () => {
         selected.delete(id);
         render();
+        chatHistory?.schedule();
       });
     }),
   );
@@ -298,7 +309,7 @@ function setCatalog(c) {
   );
   render();
 }
-for (const selector of ["#query", "#type", "#specialty", "#favorite-query"])
+for (const selector of ["#query", "#type", "#specialty"])
   $(selector).addEventListener("input", () => {
     pageSize = 24;
     render();
@@ -466,12 +477,17 @@ $("#open-map").onclick = () => {
 };
 function openProvider(id) {
   const unit =
-    catalog?.units.find((u) => u.id === id) ?? personal.favorites[id]?.snapshot;
+    catalog?.units.find((u) => u.id === id) ??
+    personal.favorites[id]?.snapshot ??
+    careRows(catalog, personal.favorites, workspace.get()).find((r) => r.unit.id === id)
+      ?.unit;
   if (!unit) {
     notice("Unidade não localizada no catálogo atual.");
     return;
   }
-  $("#provider-details").replaceChildren(card(unit, false, false));
+  $("#provider-details").replaceChildren(
+    card(unit, !catalog.units.some((u) => u.id === id), false),
+  );
   $("#provider-dialog").dataset.id = id;
   contacts.show(unit);
   $("#provider-dialog").showModal();
@@ -483,6 +499,7 @@ const workspace = createWorkspace({
   changed: () => {
     chatHistory?.render();
     contacts?.render();
+    care?.render();
   },
 });
 async function flushHistory() {
@@ -513,6 +530,15 @@ chatHistory = createChatHistory({
   getCatalog: () => catalog,
   openProvider,
   notice,
+  getSelection: () => ({ scope: $("#scope").value, selection: [...selected] }),
+  restoreSelection: (c) => {
+    selected = new Set(
+      (c?.selection ?? []).filter((id) => catalog?.units.some((u) => u.id === id)),
+    );
+    $("#scope").value = c?.scope ?? "catalog";
+    $("#selection-wrap").hidden = $("#scope").value !== "selected";
+    render();
+  },
 });
 contacts = createContacts({
   workspace,
@@ -523,6 +549,100 @@ contacts = createContacts({
   },
   notice,
 });
+care = createCare({
+  getCatalog: () => catalog,
+  getPersonal: () => personal,
+  workspace,
+  card,
+  openRecord: (c) => {
+    openProvider(c.providerId);
+    contacts.edit(c);
+  },
+});
+$("#scope").addEventListener("change", () => {
+  render();
+  chatHistory.schedule();
+});
+function reviewComparison() {
+  const units = [...selected]
+    .map((id) => catalog.units.find((u) => u.id === id))
+    .filter(Boolean);
+  const table = document.createElement("table");
+  const head = document.createElement("thead"),
+    tr = document.createElement("tr");
+  for (const title of [
+    "Prestador",
+    "Endereço",
+    "Especialidades",
+    "Telefones",
+    "Seleção",
+  ]) {
+    const th = document.createElement("th");
+    th.textContent = title;
+    tr.append(th);
+  }
+  head.append(tr);
+  table.append(head);
+  const body = document.createElement("tbody");
+  for (const u of units) {
+    const row = document.createElement("tr");
+    for (const value of [
+      u.name,
+      u.address,
+      u.specialties.join(" · "),
+      u.phones.join(" / "),
+    ]) {
+      const td = document.createElement("td");
+      td.textContent = value;
+      row.append(td);
+    }
+    const td = document.createElement("td");
+    td.append(
+      button("Remover", () => {
+        selected.delete(u.id);
+        render();
+        chatHistory.schedule();
+        reviewComparison();
+      }),
+    );
+    row.append(td);
+    body.append(row);
+  }
+  table.append(body);
+  $("#comparison-table").replaceChildren(table);
+  $("#start-comparison").disabled = units.length < 2;
+  $("#start-comparison").textContent =
+    units.length < 2
+      ? "Selecione pelo menos 2 prestadores"
+      : `Abrir conversa para comparar ${units.length} prestadores`;
+  if (!$("#comparison-dialog").open) $("#comparison-dialog").showModal();
+}
+$("#review-comparison").onclick = reviewComparison;
+$("#close-comparison").onclick = () => $("#comparison-dialog").close();
+$("#clear-comparison").onclick = () => {
+  selected.clear();
+  render();
+  chatHistory.schedule();
+};
+$("#start-comparison").onclick = action(async () => {
+  if (selected.size < 2) return;
+  const ids = [...selected];
+  const criteria = $("#comparison-criteria").value.trim();
+  await chatHistory.compare(
+    ids,
+    "Compare estes prestadores do catálogo em uma tabela, considerando endereço, especialidades e informações a confirmar com cada unidade. Não presuma avaliações, distâncias ou disponibilidade." +
+      (criteria ? " Meus critérios: " + criteria : ""),
+  );
+  $("#comparison-dialog").close();
+  $("#provider-dialog").close();
+  document.querySelector(".chat-options").open = false;
+  tab("ai");
+  $("#question").focus();
+  notice(
+    "Comparação preparada. Revise a mensagem e clique em Enviar para consultar a IA.",
+  );
+});
+chatHistory.render();
 $("#export-workspace").onclick = action(async () => {
   try {
     await chatHistory.save();

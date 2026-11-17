@@ -1,18 +1,11 @@
-## Cadê Doutor 0.3.1 · conversas e acompanhamento pessoal
+## Cadê Doutor 0.4.0 · conversas, prestadores e comparação
 
-- Lista lateral de conversas salvas, com busca por nome, tags e prestador vinculado.
-- Renomeação, cores e tags pelo botão Organizar; retomada após recarregar ou reiniciar o serviço.
-- Respostas em área rolável própria e campo de mensagem separado, sem cobrir o conteúdo.
-- Ficha e contatos: registre data, atendente, canal, situação e anotações; vincule e retome uma conversa pela ficha.
-- Favoritos preservados e backup separado de conversas e contatos em Conexão.
-- Dados locais separados por perfil; registros pessoais não são enviados automaticamente à IA. A continuação usa até 20 trocas completas recentes, preservando o histórico integral para leitura.
+Renomeie suas conversas e use tags e cores pelos botões do cabeçalho. Fixe pesquisas importantes, arquive as concluídas e restaure pelo filtro Arquivadas. A busca também encontra o conteúdo das mensagens.
 
-### Atualização
+Meus prestadores reúne favoritos, registros de contatos e conversas vinculadas. Filtre pela situação mais recente ou por ausência no catálogo e acompanhe a linha do tempo. Nos contatos, registre o profissional, próximo passo e retorno previsto. A data não dispara lembretes.
 
-Pare o serviço com Ctrl+C. Execute `git pull --ff-only`, `npm ci`, `npm run build` e `npm start`. Recarregue com Ctrl+Shift+R e informe o novo código em Conexão. Na extensão, use Recarregar em `chrome://extensions`.
+Para comparar: marque + Comparar em pelo menos duas fichas, abra Revisar comparação, confira a tabela e seus critérios. Abra a conversa de comparação e clique em Enviar. A seleção fica salva na conversa; anotações e contatos não são enviados automaticamente à IA.
 
-Antes de atualizar, copie respostas antigas que queira guardar: versões anteriores à 0.3.0 não persistiam conversas e não permitem recuperação automática. Conta autorizada e favoritos são preservados.
+Atualização pelo código: encerre o serviço, execute git pull --ff-only, npm ci, npm run build e npm start. Recarregue a extensão em chrome://extensions e conecte com o novo código. Históricos e favoritos existentes são preservados. Exporte os backups antes de atualizar, especialmente se precisar voltar a uma versão antiga.
 
-### Validação e limites
-
-Testes automatizados verificam persistência, isolamento por conta, conflitos entre janelas, contexto da IA e importação. O fluxo do Chromium usa conta e respostas simuladas para verificar retomada, organização, contatos, favoritos e posicionamento em desktop/celular. O serviço salva localmente, sem nuvem ou envio de mensagens aos prestadores. Faça backups dos dados pessoais.
+Pacotes: extensão Chrome, aplicativo local e plugin MCP. Esta prévia continua usando o serviço local; não há sincronização em nuvem ou agendamento automático.

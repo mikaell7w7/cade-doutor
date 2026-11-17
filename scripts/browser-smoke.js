@@ -68,7 +68,7 @@ try {
   await page.waitForFunction(() =>
     document.querySelector("#history-state").textContent.includes("salvas neste"),
   );
-  await page.locator("#edit-chat").click();
+  await page.getByRole("button", { name: "Renomear", exact: true }).click();
   await page.locator("#chat-title").fill("Dentistas dos filhos");
   await page.locator("#chat-color").selectOption("purple");
   await page.locator("#chat-tags").fill("filhos, ortodontia");
@@ -81,6 +81,16 @@ try {
   await page.waitForFunction(() =>
     document.querySelector("#history-state").textContent.includes("salvas neste"),
   );
+  await page.locator("#pin-chat").click();
+  await page.locator("#pin-chat").filter({ hasText: "Desafixar" }).waitFor();
+  await page.locator("#archive-chat").click();
+  await page.locator("#archive-chat").filter({ hasText: "Restaurar" }).waitFor();
+  assert.equal(await page.locator("#chat-filter").inputValue(), "archived");
+  await page.locator("#archive-chat").click();
+  await page.locator("#archive-chat").filter({ hasText: "Arquivar" }).waitFor();
+  await page.locator("#edit-chat-tags").click();
+  assert.equal(await page.locator("#chat-tags").inputValue(), "filhos, ortodontia");
+  await page.locator("#close-chat-editor").click();
   const geometry = await page.evaluate(() => {
     const log = document.querySelector("#chat-scroll").getBoundingClientRect(),
       form = document.querySelector("#chat-form").getBoundingClientRect();
@@ -120,6 +130,9 @@ try {
   await page.locator(".provider-link").first().click();
   await page.locator("#new-contact").click();
   await page.locator("#contact-person").fill("Maria");
+  await page.locator("#contact-professional").fill("Dra. Ana");
+  await page.locator("#contact-next-step").fill("Confirmar agenda por telefone");
+  await page.locator("#contact-return").fill("2026-11-20T09:00");
   await page.locator("#contact-channel").selectOption("WhatsApp");
   await page.locator("#contact-status").selectOption("Aguardando retorno");
   await page
@@ -143,6 +156,59 @@ try {
     .locator(".contact-entry button")
     .filter({ hasText: "Retomar conversa" })
     .click();
+  await page.getByRole("button", { name: "Meus prestadores", exact: false }).click();
+  await page.locator("#care-status").selectOption("Aguardando retorno");
+  await page.locator("#favorite-query").fill("Dra. Ana");
+  assert.equal(await page.locator("#favorite-results .card").count(), 1);
+  assert(
+    (await page.locator("#favorite-results").textContent()).includes("Confirmar agenda"),
+  );
+  await page.locator("#care-timeline button").first().click();
+  await page.locator("#contact-note").fill("Retorno confirmado para sexta-feira.");
+  await page.locator("#contact-form button[type=submit]").click();
+  await page.locator("#contact-editor").waitFor({ state: "hidden" });
+  await page.locator("#close-provider").click();
+  assert(
+    (await page.locator("#care-timeline").textContent()).includes("Retorno confirmado"),
+  );
+  await page.screenshot({ path: "ui-results/prestadores.png", fullPage: true });
+  await page.getByRole("button", { name: "Explorar", exact: true }).click();
+  await page.locator("#query").fill("ortodontia");
+  await page.locator("#results .comparison-toggle").nth(0).click();
+  await page.locator("#review-comparison").click();
+  assert(await page.locator("#start-comparison").isDisabled());
+  await page.locator("#close-comparison").click();
+  await page.locator("#results .comparison-toggle").nth(1).click();
+  await page.locator("#review-comparison").click();
+  assert.equal(await page.locator("#comparison-table tbody tr").count(), 2);
+  await page.locator("#comparison-criteria").fill("Ortodontia para adolescentes");
+  await page.screenshot({ path: "ui-results/comparacao.png" });
+  await page.locator("#start-comparison").click();
+  await page.locator("#comparison-dialog").waitFor({ state: "hidden" });
+  assert.equal(await page.locator("#scope").inputValue(), "selected");
+  assert(
+    (await page.locator("#question").inputValue()).includes(
+      "Ortodontia para adolescentes",
+    ),
+  );
+  await page.locator("#ask").click();
+  await page
+    .locator(".chat-progress")
+    .filter({ hasText: "Pesquisa concluída" })
+    .waitFor();
+  assert.equal(calls[2].scope, "selected");
+  assert.equal(calls[2].ids.length, 2);
+  assert(!JSON.stringify(calls[2]).includes("Retorno confirmado"));
+  await page.waitForFunction(() =>
+    document.querySelector("#history-state").textContent.includes("salvas neste"),
+  );
+  await page.locator("#new-chat").click();
+  assert.equal(await page.locator("#scope").inputValue(), "catalog");
+  await page.reload();
+  await page.locator(".chat-list-item").filter({ hasText: "Comparação de 2" }).click();
+  assert.equal(await page.locator("#scope").inputValue(), "selected");
+  assert((await page.locator("#compare-count").textContent()).includes("2 prestador"));
+  await page.screenshot({ path: "ui-results/comparacao-chat.png" });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: "ui-results/mobile.png" });
   const mobile = await page.evaluate(() => {

@@ -11,16 +11,23 @@
       <a class="brand" href="#"
         ><span class="logo" aria-hidden="true">+</span
         ><span>Cadê Doutor<small>Sua rede de cuidado</small></span></a
-      ><span class="version">PRÉVIA 0.3.1</span>
+      ><span class="version">PRÉVIA 0.4.0</span>
     </header>
     <nav aria-label="Navegação">
       <button data-tab="explore">Explorar</button
-      ><button data-tab="favorites">Favoritos <span id="fav-count">0</span></button
+      ><button data-tab="favorites">Meus prestadores <span id="fav-count">0</span></button
       ><button data-tab="ai" class="active">Assistente IA</button
       ><button data-tab="settings">Conexão</button>
     </nav>
     <main>
       <p id="notice" role="status" aria-live="polite"></p>
+      <div id="compare-tray" class="compare-tray" hidden>
+        <span id="compare-count"></span>
+        <button id="review-comparison" type="button">Revisar comparação</button>
+        <button id="clear-comparison" class="secondary" type="button">
+          Limpar seleção
+        </button>
+      </div>
       <section id="explore" class="pane" hidden>
         <div class="intro">
           <p class="eyebrow">REDE CREDENCIADA</p>
@@ -70,16 +77,17 @@
       <section id="favorites" class="pane" hidden>
         <div class="intro">
           <p class="eyebrow">MINHA COLEÇÃO</p>
-          <h1>Os seus próximos cuidados.</h1>
+          <h1>Meus prestadores e tratativas.</h1>
           <p>
-            Favoritos preservados, mesmo quando uma unidade deixa de aparecer no catálogo.
+            Acompanhe favoritos, contatos e conversas vinculadas. Os registros são
+            pessoais e permanecem salvos neste perfil.
           </p>
         </div>
         <label
-          >Filtrar minha lista<input
+          >Buscar prestador, profissional ou tratativa<input
             id="favorite-query"
             type="search"
-            placeholder="Nome da lista, prestador ou anotação"
+            placeholder="Nome, atendente, profissional, lista ou texto do contato"
         /></label>
         <div class="actions">
           <button id="export-personal" class="secondary">Exportar backup pessoal</button
@@ -90,7 +98,44 @@
               accept="application/json,.json"
           /></label>
         </div>
+        <div class="filters care-filters">
+          <label
+            >Mostrar<select id="care-view">
+              <option value="all">Todos acompanhados</option>
+              <option value="favorites">Somente favoritos</option>
+              <option value="contacts">Com contatos registrados</option>
+              <option value="missing">Ausentes no catálogo atual</option>
+            </select></label
+          >
+          <label
+            >Situação mais recente<select id="care-status">
+              <option value="">Todas as situações</option>
+              <option>Sem contato registrado</option>
+              <option>Em contato</option>
+              <option>Aguardando retorno</option>
+              <option>Agendado</option>
+              <option>Concluído</option>
+              <option>Sem disponibilidade</option>
+            </select></label
+          >
+        </div>
+        <p id="care-summary" role="status"></p>
+        <div class="color-legend">
+          <span class="status-badge" data-tone="blue">Em contato</span
+          ><span class="status-badge" data-tone="orange">Aguardando retorno</span
+          ><span class="status-badge" data-tone="purple">Agendado</span
+          ><span class="status-badge" data-tone="green">Concluído</span>
+        </div>
         <div id="favorite-results" class="cards"></div>
+        <section class="panel">
+          <h2>Linha do tempo das tratativas</h2>
+          <p class="muted">
+            Respeita os filtros acima. Abra um registro para editar, excluir ou retomar a
+            conversa vinculada.
+          </p>
+          <div id="care-timeline"></div>
+          <button id="care-more" class="secondary" hidden>Mostrar mais registros</button>
+        </section>
       </section>
       <section id="ai" class="pane chat-workbench">
         <aside class="chat-sidebar" aria-label="Histórico de conversas">
@@ -103,8 +148,20 @@
             >Buscar conversa ou tag<input
               id="chat-search"
               type="search"
-              placeholder="Nome, #tag ou prestador"
+              placeholder="Nome, #tag ou conteúdo"
           /></label>
+          <label
+            >Conversas<select id="chat-filter">
+              <option value="active">Ativas</option>
+              <option value="archived">Arquivadas</option>
+              <option value="all">Todas</option>
+            </select></label
+          >
+          <div
+            id="chat-tag-filters"
+            class="tag-filters"
+            aria-label="Filtrar por tag"
+          ></div>
           <p id="history-state" class="muted" role="status">
             Conecte o serviço para carregar o histórico.
           </p>
@@ -124,7 +181,14 @@
               <h1 id="active-chat-title">Nova conversa</h1>
               <p id="active-chat-tags" class="muted"></p>
             </div>
-            <button id="edit-chat" class="secondary" type="button">Organizar</button>
+            <div class="chat-tools">
+              <button id="edit-chat" class="secondary" type="button">Renomear</button>
+              <button id="edit-chat-tags" class="secondary" type="button">
+                Tags e cor
+              </button>
+              <button id="pin-chat" class="secondary" type="button">Fixar</button>
+              <button id="archive-chat" class="secondary" type="button">Arquivar</button>
+            </div>
             <details class="chat-options">
               <summary>Opções da pesquisa</summary>
               <div class="chat-toolbar">
@@ -153,6 +217,7 @@
               >
             </details>
           </div>
+          <div id="chat-context" class="chat-context">Pesquisa em todo o catálogo</div>
           <div
             id="chat-scroll"
             class="chat-scroll"
@@ -367,11 +432,18 @@
           Registro pessoal das suas tratativas. Não envia mensagens ao prestador nem à IA.
         </p>
         <div id="contact-list"></div>
+        <h3>Conversas sobre este prestador</h3>
+        <div id="provider-chats"></div>
       </section>
     </dialog>
     <dialog id="chat-editor">
       <form id="chat-editor-form">
-        <h2>Organizar conversa</h2>
+        <h2>Nome, tags e cor da conversa</h2>
+        <p class="muted">
+          Use tags para agrupar assuntos, como filhos, pediatria ou Asa Sul. A cor
+          identifica esta conversa; a situação das tratativas aparece nos registros de
+          contato.
+        </p>
         <label>Nome<input id="chat-title" maxlength="120" required /></label>
         <label
           >Cor<select id="chat-color">
@@ -389,6 +461,7 @@
             maxlength="490"
             placeholder="Ortodontia, filhos, Asa Sul"
         /></label>
+        <div id="tag-suggestions" class="tag-filters" aria-label="Reutilizar tags"></div>
         <label
           >Vincular prestador<select id="chat-provider">
             <option value="">Sem novo vínculo</option>
@@ -414,6 +487,12 @@
             maxlength="120"
             placeholder="Opcional"
         /></label>
+        <label
+          >Profissional que atende<input
+            id="contact-professional"
+            maxlength="160"
+            placeholder="Nome do médico ou dentista, se informado"
+        /></label>
         <label>Canal<select id="contact-channel"></select></label>
         <label>Situação<select id="contact-status"></select></label>
         <label
@@ -425,6 +504,21 @@
             placeholder="Disponibilidade, retorno combinado, orientações recebidas..."
           ></textarea>
         </label>
+        <label
+          >Próximo passo<textarea
+            id="contact-next-step"
+            rows="2"
+            maxlength="1000"
+            placeholder="Ex.: ligar novamente para confirmar a agenda"
+          ></textarea>
+        </label>
+        <label
+          >Data prevista para retorno<input id="contact-return" type="datetime-local"
+        /></label>
+        <p class="muted">
+          A data é um registro de acompanhamento. Não envia lembretes nem agenda
+          consultas.
+        </p>
         <label>Conversa relacionada<select id="contact-chat"></select></label>
         <div class="actions">
           <button type="submit">Salvar registro</button
@@ -451,6 +545,31 @@
           ><button value="cancel" class="secondary">Cancelar</button>
         </div>
       </form>
+    </dialog>
+    <dialog id="comparison-dialog">
+      <div class="resultbar">
+        <h2>Comparar prestadores</h2>
+        <button id="close-comparison" class="secondary">Fechar</button>
+      </div>
+      <p>
+        1. Selecione pelo menos dois prestadores. 2. Confira os dados abaixo. 3. Abra uma
+        conversa exclusiva para comparar com IA.
+      </p>
+      <div id="comparison-table" class="table-scroll"></div>
+      <label
+        >O que pesa na sua escolha?<textarea
+          id="comparison-criteria"
+          rows="2"
+          maxlength="2000"
+          placeholder="Ex.: ortodontia para adolescentes, região e atendimento aos sábados"
+        ></textarea>
+      </label>
+      <p class="muted">
+        A IA receberá os dados do catálogo destes prestadores e os critérios que você
+        escrever. Contatos e anotações pessoais não são enviados automaticamente. Nenhuma
+        consulta será agendada.
+      </p>
+      <button id="start-comparison">Abrir conversa de comparação</button>
     </dialog>
     <dialog id="welcome">
       <h2>Você está usando seu plano do ChatGPT</h2>

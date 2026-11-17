@@ -12,7 +12,7 @@ export async function startMcp({
     resolve(dirname(fileURLToPath(import.meta.url)), "../.."),
   store = new Store(),
 } = {}) {
-  const server = new McpServer({ name: "cade-doutor", version: "0.3.1" }),
+  const server = new McpServer({ name: "cade-doutor", version: "0.4.0" }),
     annotations = {
       readOnlyHint: true,
       destructiveHint: false,

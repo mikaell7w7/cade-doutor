@@ -1,8 +1,8 @@
-# Instalação da prévia 0.3.1
+# Instalação da prévia 0.4.0
 
 ## Pacotes prontos
 
-Em [Releases](https://github.com/mikaell7w7/cade-doutor/releases), baixe `cade-doutor-local-0.3.1.zip` e `cade-doutor-chrome-0.3.1.zip`. Confira os arquivos com `SHA256SUMS`. No Linux: `sha256sum --check SHA256SUMS`. Coloque todos os arquivos da release na mesma pasta antes da conferência.
+Em [Releases](https://github.com/mikaell7w7/cade-doutor/releases), baixe `cade-doutor-local-0.4.0.zip` e `cade-doutor-chrome-0.4.0.zip`. Confira os arquivos com `SHA256SUMS`. No Linux: `sha256sum --check SHA256SUMS`. Coloque todos os arquivos da release na mesma pasta antes da conferência.
 
 1. Instale Node.js 22 ou superior. O serviço local é previsto para Linux e macOS; Windows ainda requer homologação da proteção de credenciais.
 2. Extraia o ZIP local em uma pasta e execute `node start.mjs` nessa pasta. Não é necessário instalar dependências npm no pacote pronto.
@@ -76,7 +76,7 @@ Esta prévia não geocodifica automaticamente todas as 690 unidades e não afirm
 
 ## Plugin MCP local
 
-O pacote `cade-doutor-plugin-0.3.1.zip` contém uma pasta `cade-doutor` com `plugin.json`, `mcp.json`, servidor e catálogo. Instale em um host de plugins locais compatível. `${PLUGIN_ROOT}` é resolvido por esse host.
+O pacote `cade-doutor-plugin-0.4.0.zip` contém uma pasta `cade-doutor` com `plugin.json`, `mcp.json`, servidor e catálogo. Instale em um host de plugins locais compatível. `${PLUGIN_ROOT}` é resolvido por esse host.
 
 Em clientes MCP que exigem configuração manual, registre o servidor stdio com comando `node` e argumento absoluto `/caminho/cade-doutor/server/mcp.mjs`. Use o mesmo usuário do sistema e, se personalizado, o mesmo `CADE_DOUTOR_HOME` do aplicativo local. O plugin não necessita do serviço HTTP em execução para ler o catálogo e os favoritos.
 

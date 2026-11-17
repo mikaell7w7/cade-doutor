@@ -159,3 +159,43 @@ test("client serializes chat/contact updates and retains an exportable conflicti
   await client.load();
   assert.equal(client.get().chats[0].title, "Ortodontia");
 });
+test("organization and contact follow-up survive backups without altering old schemas", () => {
+  const d = {
+    ...emptyWorkspace(),
+    chats: [
+      {
+        ...chat(),
+        archived: true,
+        pinned: true,
+        scope: "selected",
+        selection: ["unit-example"],
+      },
+    ],
+    contacts: [
+      {
+        ...contact(),
+        professional: "Dra. Ana",
+        nextStep: "Confirmar agenda",
+        returnAt: date,
+      },
+    ],
+  };
+  const clean = validateWorkspace(JSON.parse(JSON.stringify(d)));
+  assert.deepEqual(clean, d);
+  for (const modify of [
+    (d) => (d.chats[0].archived = "false"),
+    (d) => (d.chats[0].scope = "all-secret"),
+    (d) => (d.chats[0].selection = ["__proto__"]),
+    (d) => (d.contacts[0].returnAt = "amanhã"),
+    (d) => (d.contacts[0].nextStep = "x".repeat(1001)),
+  ]) {
+    const invalid = structuredClone(d);
+    modify(invalid);
+    assert.throws(() => validateWorkspace(invalid));
+  }
+  assert(
+    !JSON.stringify(conversationContext(clean.chats[0].turns, "Continue")).includes(
+      "Dra. Ana",
+    ),
+  );
+});

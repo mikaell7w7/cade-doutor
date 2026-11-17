@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 - 2026-11-17
+
+- Renomear, tags e cor acessíveis no cabeçalho; fixação, arquivamento, restauração e busca no conteúdo das conversas.
+- Meus prestadores reúne favoritos, contatos e vínculos deliberados; filtros por situação e linha do tempo de tratativas.
+- Contatos com profissional, próximo passo e data de retorno; acesso às conversas relacionadas pela ficha.
+- Comparação guiada com seleção visível, tabela de catálogo e conversa exclusiva com escopo e seleção persistidos.
+- Cores funcionais para tipos de atendimento, situações, seleção e mensagens; layout adaptado ao painel lateral.
+- Backups anteriores continuam válidos. Metadados pessoais não são enviados automaticamente à IA.
+
 ## 0.3.1 - 2026-11-17
 
 Título da conversa em linha própria no celular para preservar sua identificação. O teste Chromium verifica a largura útil do título e aguarda a conclusão da gravação dos metadados antes da captura.

@@ -1,6 +1,6 @@
 # Cadê Doutor
 
-Pesquisa pessoal da rede credenciada, favoritos e conversa com pesquisa de prestadores com seu plano do ChatGPT. Código aberto, licença MIT. Prévia técnica **0.3.1**.
+Pesquisa pessoal da rede credenciada, favoritos e conversa com pesquisa de prestadores com seu plano do ChatGPT. Código aberto, licença MIT. Prévia técnica **0.4.0**.
 
 [Baixar versões](https://github.com/mikaell7w7/cade-doutor/releases) · [Instalação](docs/INSTALACAO.md) · [Privacidade](docs/PRIVACIDADE.md) · [Roadmap](docs/ROADMAP.md)
 
@@ -39,13 +39,15 @@ A tela inicial é **Assistente IA**, com escopo **Todo o catálogo**. Digite, po
 
 A resposta mostra tabelas formatadas e cartões dos prestadores consultados, com ficha, favoritos e pesquisa no Google Maps. Os cartões representam registros consultados, não uma recomendação clínica. A opção de pesquisa na web precisa ser habilitada para consultar fontes externas, quando permitida pelo modelo e pela conta. Distâncias e avaliações não são presumidas.
 
-As conversas agora são salvas neste computador, separadas por perfil. Na lista lateral, reabra uma conversa e continue de onde parou. **Organizar** permite renomear, escolher uma cor, adicionar tags e vincular prestadores. O campo de mensagem fica separado da área rolável das respostas.
+As conversas agora são salvas neste computador, separadas por perfil. Na lista lateral, reabra uma conversa e continue de onde parou. **Renomear** e **Tags e cor** ficam no cabeçalho da conversa. Fixe pesquisas importantes e arquive as concluídas; use o filtro de conversas para restaurá-las. A busca encontra nomes, tags, prestadores vinculados e conteúdo das mensagens. O campo de mensagem fica separado da área rolável das respostas.
 
-Em **Ficha e contatos**, registre suas tratativas: data, atendente, telefone/WhatsApp/e-mail, situação e anotações. Vincule o contato a uma conversa para retomá-la pela ficha. Favoritos continuam disponíveis nos cartões. Registros pessoais de contato não são enviados automaticamente à IA.
+Em **Meus prestadores**, filtre favoritos, unidades com contatos, situação mais recente ou ausências no catálogo. A linha do tempo reúne as tratativas e permite reabrir cada registro. Em **Ficha e contatos**, registre suas tratativas: data, atendente, telefone/WhatsApp/e-mail, situação e anotações. Vincule o contato a uma conversa para retomá-la pela ficha. Favoritos continuam disponíveis nos cartões. Informe também o profissional, próximo passo e data prevista de retorno (sem notificações automáticas). Registros pessoais de contato não são enviados automaticamente à IA.
 
 Ao continuar, o contexto recente da conversa é reenviado à OpenAI. Respostas interrompidas não entram nesse contexto. O histórico completo continua salvo, mesmo quando excede a janela de até 20 trocas enviadas à IA. Em **Conexão**, exporte ou importe o backup separado de conversas e contatos.
 
 Conversas de versões anteriores à 0.3.0 não eram gravadas e não podem ser recuperadas automaticamente após fechar a página. Antes de atualizar, copie manualmente qualquer resposta antiga que queira guardar.
+
+Para comparar, use **+ Comparar** em pelo menos duas fichas, clique em **Revisar comparação**, confira a tabela e informe seus critérios. **Abrir conversa de comparação** prepara uma nova conversa; revise a mensagem e clique em **Enviar**. Essa conversa preserva sua seleção ao ser reaberta. A pesquisa geral continua disponível em **Opções da pesquisa**.
 
 Para atualizar uma instalação pelo código, encerre o serviço com Ctrl+C e execute na pasta do projeto:
 

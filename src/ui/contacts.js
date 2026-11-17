@@ -1,3 +1,4 @@
+import { contactTone } from "../core/care.js";
 import { channels, contactStates } from "../core/workspace.js";
 export function createContacts({ workspace, currentChat, openChat, notice }) {
   const $ = (s) => document.querySelector(s),
@@ -25,9 +26,19 @@ export function createContacts({ workspace, currentChat, openChat, notice }) {
           note = document.createElement("p"),
           actions = document.createElement("div");
         row.className = "contact-entry";
+        row.dataset.tone = contactTone(c.status);
         actions.className = "actions";
         title.textContent = `${new Date(c.date).toLocaleString("pt-BR")} · ${c.channel} · ${c.status}${c.person ? " · " + c.person : ""}`;
-        note.textContent = c.note;
+        note.textContent = [
+          c.professional ? "Profissional: " + c.professional : "",
+          c.note,
+          c.nextStep ? "Próximo passo: " + c.nextStep : "",
+          c.returnAt
+            ? "Retorno previsto: " + new Date(c.returnAt).toLocaleString("pt-BR")
+            : "",
+        ]
+          .filter(Boolean)
+          .join("\n");
         const edit = document.createElement("button");
         edit.type = "button";
         edit.className = "secondary";
@@ -50,6 +61,28 @@ export function createContacts({ workspace, currentChat, openChat, notice }) {
     );
     if (!contacts.length)
       $("#contact-list").textContent = "Nenhum contato registrado para este prestador.";
+    const chats = workspace
+      .get()
+      .chats.filter(
+        (c) =>
+          c.providerIds.includes(provider.id) ||
+          c.turns.some((t) => t.providerIds.includes(provider.id)),
+      );
+    $("#provider-chats").replaceChildren(
+      ...chats.map((c) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "related-chat";
+        b.dataset.color = c.color;
+        b.textContent = `${c.title}${c.archived ? " · Arquivada" : ""}`;
+        b.onclick = act(async () => {
+          await openChat(c.id);
+          $("#provider-dialog").close();
+        });
+        return b;
+      }),
+    );
+    if (!chats.length) $("#provider-chats").textContent = "Nenhuma conversa relacionada.";
     $("#new-contact").disabled = !workspace.ready();
   }
   function editor(c) {
@@ -65,6 +98,15 @@ export function createContacts({ workspace, currentChat, openChat, notice }) {
     $("#contact-date").value = d.toISOString().slice(0, 16);
     $("#contact-person").value = c?.person ?? "";
     $("#contact-note").value = c?.note ?? "";
+    $("#contact-professional").value = c?.professional ?? "";
+    $("#contact-next-step").value = c?.nextStep ?? "";
+    let returnDate = "";
+    if (c?.returnAt) {
+      const d = new Date(c.returnAt);
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      returnDate = d.toISOString().slice(0, 16);
+    }
+    $("#contact-return").value = returnDate;
     $("#contact-channel").replaceChildren(...channels.map((t) => new Option(t, t)));
     $("#contact-channel").value = c?.channel ?? channels[0];
     $("#contact-status").replaceChildren(...contactStates.map((t) => new Option(t, t)));
@@ -91,6 +133,11 @@ export function createContacts({ workspace, currentChat, openChat, notice }) {
       channel: $("#contact-channel").value,
       status: $("#contact-status").value,
       note: $("#contact-note").value,
+      professional: $("#contact-professional").value,
+      nextStep: $("#contact-next-step").value,
+      returnAt: $("#contact-return").value
+        ? new Date($("#contact-return").value).toISOString()
+        : "",
       chatId: $("#contact-chat").value,
     };
     await workspace.update((d) => {
@@ -118,6 +165,7 @@ export function createContacts({ workspace, currentChat, openChat, notice }) {
     render();
   });
   return {
+    edit: editor,
     show(unit) {
       provider = unit;
       render();

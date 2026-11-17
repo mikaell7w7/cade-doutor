@@ -51,6 +51,13 @@ export function validateWorkspace(value) {
         c.turns.length <= 200,
       "Conversa inválida ou muito longa.",
     );
+    check(
+      (c.archived === undefined || typeof c.archived === "boolean") &&
+        (c.pinned === undefined || typeof c.pinned === "boolean") &&
+        (c.scope === undefined || ["catalog", "selected"].includes(c.scope)) &&
+        (c.selection === undefined || ids(c.selection, 30)),
+      "Organização da conversa inválida.",
+    );
     const turns = c.turns.map((t) => {
       check(
         text(t.question, 8000) &&
@@ -79,6 +86,10 @@ export function validateWorkspace(value) {
       updatedAt: c.updatedAt,
       draft: c.draft ?? "",
       turns,
+      ...(c.archived !== undefined ? { archived: c.archived } : {}),
+      ...(c.pinned !== undefined ? { pinned: c.pinned } : {}),
+      ...(c.scope !== undefined ? { scope: c.scope } : {}),
+      ...(c.selection !== undefined ? { selection: [...new Set(c.selection)] } : {}),
     };
   });
   const contacts = value.contacts.map((c) => {
@@ -96,7 +107,16 @@ export function validateWorkspace(value) {
         (!c.chatId || id(c.chatId)),
       "Registro de contato inválido.",
     );
+    check(
+      (c.professional === undefined || text(c.professional, 160)) &&
+        (c.nextStep === undefined || text(c.nextStep, 1000)) &&
+        (c.returnAt === undefined || c.returnAt === "" || date(c.returnAt)),
+      "Profissional ou próximo passo inválido.",
+    );
     return {
+      ...(c.professional !== undefined ? { professional: c.professional } : {}),
+      ...(c.nextStep !== undefined ? { nextStep: c.nextStep } : {}),
+      ...(c.returnAt !== undefined ? { returnAt: c.returnAt } : {}),
       id: c.id,
       providerId: c.providerId,
       providerName: c.providerName,
