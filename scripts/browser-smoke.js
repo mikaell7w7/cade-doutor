@@ -139,7 +139,10 @@ try {
     .locator("#contact-note")
     .fill("Ficou de retornar com horários na sexta-feira.");
   await page.locator("#contact-form button[type=submit]").click();
-  await page.locator(".contact-entry").filter({ hasText: "Maria" }).waitFor();
+  await page
+    .locator("#contact-list .contact-entry")
+    .filter({ hasText: "Maria" })
+    .waitFor();
   await page.locator("#provider-dialog .favorite").click();
   await page.waitForFunction(
     () => document.querySelector("#fav-count").textContent === "1",
@@ -151,9 +154,12 @@ try {
     .filter({ hasText: "Dentistas dos filhos" })
     .click();
   await page.locator(".provider-link").first().click();
-  await page.locator(".contact-entry").filter({ hasText: "Maria" }).waitFor();
   await page
-    .locator(".contact-entry button")
+    .locator("#contact-list .contact-entry")
+    .filter({ hasText: "Maria" })
+    .waitFor();
+  await page
+    .locator("#contact-list .contact-entry button")
     .filter({ hasText: "Retomar conversa" })
     .click();
   await page.getByRole("button", { name: "Meus prestadores", exact: false }).click();
@@ -230,7 +236,7 @@ try {
     .evaluate((el) => el.getBoundingClientRect().width);
   assert(titleWidth > 300, "The chat title must have its own row on mobile");
   await page.locator("#toggle-chats").click();
-  await page.locator("#chat-search").fill("ortodontia");
+  await page.locator("#chat-search").fill("#ortodontia");
   assert.equal(await page.locator(".chat-list-item").count(), 1);
   await page.locator("#close-chats").click();
   assert(await page.locator("#question").isVisible());
