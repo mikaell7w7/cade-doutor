@@ -1,3 +1,4 @@
+import { createAssistant } from "./chat.js";
 import {
   searchUnits,
   validateCatalog,
@@ -29,7 +30,7 @@ let session = ext
   pageSize = 24,
   connected = false,
   status = {},
-  aborter;
+  assistant;
 const notice = (t) => {
   $("#notice").textContent = t;
 };
@@ -114,7 +115,7 @@ function showEditor(u) {
     $("#edit-dialog").close();
   });
 }
-function card(u, missing = false) {
+function card(u, missing = false, showDetails = true) {
   const el = document.createElement("article");
   el.className = "card";
   const tags = document.createElement("div");
@@ -194,6 +195,7 @@ function card(u, missing = false) {
     n.textContent = [f.list, f.note].filter(Boolean).join(": ");
     el.append(n);
   }
+  if (showDetails) actions.append(button("Ver ficha", () => openProvider(u.id)));
   el.append(actions);
   return el;
 }
@@ -204,6 +206,17 @@ function render() {
     specialty: $("#specialty").value,
     type: $("#type").value,
   });
+  $("#chat-catalog").textContent =
+    catalog.units.length +
+    " unidades · " +
+    catalog.categories.length +
+    " especialidades · coleta " +
+    catalog.collectedAt;
+  assistant?.refreshCards();
+  if ($("#provider-dialog").open) {
+    const unit = catalog.units.find((u) => u.id === $("#provider-dialog").dataset.id);
+    if (unit) $("#provider-details").replaceChildren(card(unit, false, false));
+  }
   $("#result-count").textContent = units.length + " unidades encontradas";
   $("#source-label").textContent =
     catalog.source.name +
@@ -243,7 +256,8 @@ function render() {
     }),
   );
   if (!selected.size)
-    $("#selection").textContent = "Selecione prestadores em Explorar para comparar.";
+    $("#selection").textContent =
+      "Nenhuma unidade selecionada. Use Todo o catálogo para uma pesquisa ampla.";
 }
 function setCatalog(c) {
   catalog = validateCatalog(c);
@@ -272,6 +286,7 @@ $("#more").onclick = () => {
 };
 async function refresh() {
   status = await api("status");
+  assistant?.resetForAccount(status.active);
   connected = true;
   $("#connection-state").textContent = "Conectado ao serviço local";
   $("#account").replaceChildren(
@@ -411,65 +426,27 @@ $("#open-map").onclick = () => {
   if (ext) chrome.tabs.create({ url: base + "/map.html" });
   else window.open("/map.html", "_blank");
 };
-$("#ask").onclick = action(async () => {
-  if (!selected.size) throw new Error("Selecione pelo menos um prestador para comparar.");
-  $("#answer").textContent = "";
-  $("#ask").disabled = true;
-  aborter = new AbortController();
-  $("#cancel-ai").hidden = false;
-  try {
-    const r = await fetch(base + "/api/ask", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Cade-Session": session ?? "",
-      },
-      body: JSON.stringify({
-        ids: [...selected],
-        question: $("#question").value,
-        model: $("#model").value,
-        webSearch: $("#web-search").checked,
-      }),
-      signal: aborter.signal,
-    });
-    if (!r.ok) {
-      const d = await r.json();
-      throw new Error(d.error);
-    }
-    let buffer = "",
-      done = false;
-    const reader = r.body.getReader(),
-      decoder = new TextDecoder();
-    while (true) {
-      const v = await reader.read();
-      if (v.done) break;
-      buffer += decoder.decode(v.value, { stream: true });
-      let end;
-      while ((end = buffer.indexOf("\n")) >= 0) {
-        const line = buffer.slice(0, end);
-        buffer = buffer.slice(end + 1);
-        if (!line) continue;
-        const e = JSON.parse(line);
-        if (e.error) throw new Error(e.error);
-        if (e.delta) $("#answer").textContent += e.delta;
-        if (e.done) done = true;
-      }
-    }
-    if (!done)
-      throw new Error("Resposta interrompida. O texto parcial não foi concluído.");
-    notice("Comparação concluída. Confira as fontes citadas antes de decidir.");
-  } catch (e) {
-    notice(
-      e.name === "AbortError"
-        ? "Consulta interrompida. O serviço recebeu o cancelamento."
-        : e.message,
-    );
-  } finally {
-    $("#ask").disabled = false;
-    $("#cancel-ai").hidden = true;
+function openProvider(id) {
+  const unit = catalog?.units.find((u) => u.id === id);
+  if (!unit) {
+    notice("Unidade não localizada no catálogo atual.");
+    return;
   }
+  $("#provider-details").replaceChildren(card(unit, false, false));
+  $("#provider-dialog").dataset.id = id;
+  $("#provider-dialog").showModal();
+}
+$("#close-provider").onclick = () => $("#provider-dialog").close();
+assistant = createAssistant({
+  base,
+  getSession: () => session,
+  getAccount: () => status.active,
+  getCatalog: () => catalog,
+  getSelected: () => selected,
+  renderCard: card,
+  openProvider,
+  notice,
 });
-$("#cancel-ai").onclick = () => aborter?.abort();
 if (ext)
   chrome.storage.onChanged.addListener((changes, area) => {
     const specialty = changes.context?.newValue?.specialty;

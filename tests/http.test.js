@@ -60,9 +60,7 @@ test("HTTP pairing, host/origin guards, personal isolation and revisions", async
   assert.equal(pair.status, 200);
   headers["X-Cade-Session"] = (await pair.json()).session;
   assert.equal((await fetch(base + "/api/catalog", { headers })).status, 200);
-  const personal = await (
-    await fetch(base + "/api/personal", { headers })
-  ).json();
+  const personal = await (await fetch(base + "/api/personal", { headers })).json();
   assert.equal(personal.profile, "personal-local.json");
   const save = () =>
     fetch(base + "/api/personal", {
@@ -85,4 +83,70 @@ test("HTTP pairing, host/origin guards, personal isolation and revisions", async
     },
   });
   assert.equal(localGet.status, 200);
+});
+
+test("HTTP assistant accepts the full catalogue without IDs, streams tools and rejects stale account history", async (t) => {
+  const dir = await mkdtemp(join(tmpdir(), "cade-chat-http-"));
+  let active = "account-a";
+  const calls = [],
+    tokenAccounts = [];
+  const app = await createApp({
+    store: new Store(dir),
+    port: 43121,
+    auth: {
+      profiles: async () => ({ active }),
+      access: async (key) => {
+        tokenAccounts.push(key);
+        return "fixture";
+      },
+    },
+    askFn: async (auth, input, delta, _fetch, event) => {
+      calls.push(input);
+      await auth.access();
+      event({ status: "Buscando no catálogo", providers: [input.catalog.units[0]] });
+      delta("Resultado de toda a rede.");
+    },
+  });
+  await new Promise((r) => app.server.listen(43121, "127.0.0.1", r));
+  t.after(async () => {
+    await new Promise((r) => app.server.close(r));
+    await rm(dir, { recursive: true, force: true });
+  });
+  const headers = { Origin: app.base, "Content-Type": "application/json" };
+  const pair = await fetch(app.base + "/api/pair", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ code: app.pairingCode }),
+  });
+  headers["X-Cade-Session"] = (await pair.json()).session;
+  const post = (body) =>
+    fetch(app.base + "/api/ask", {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    });
+  const response = await post({ model: "fixture", question: "Ortodontia" });
+  assert.equal(response.status, 200);
+  const events = (await response.text()).trim().split("\n").map(JSON.parse);
+  assert.equal(calls[0].scope, "catalog");
+  assert.equal(calls[0].catalog.units.length, 690);
+  assert.deepEqual(calls[0].ids, []);
+  assert.equal(events[0].providers[0].id, calls[0].catalog.units[0].id);
+  assert.equal(events.at(-1).done, true);
+  assert.deepEqual(tokenAccounts, ["account-a"]);
+  const history = [
+    { role: "user", content: "Ortodontia" },
+    { role: "assistant", content: "Resultados" },
+  ];
+  active = "account-b";
+  assert.equal(
+    (await post({ question: "Agora Guará", account: "account-a", history })).status,
+    400,
+  );
+  assert.equal((await post({ question: "Agora Guará", history })).status, 400);
+  assert.equal(
+    (await post({ question: "Compare", scope: "selected", ids: [] })).status,
+    400,
+  );
+  assert.equal(calls.length, 1);
 });

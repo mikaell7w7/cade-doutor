@@ -1,6 +1,6 @@
 # Cadê Doutor
 
-Pesquisa pessoal da rede credenciada, favoritos e comparação de prestadores com seu plano do ChatGPT. Código aberto, licença MIT. Prévia técnica **0.1.1**.
+Pesquisa pessoal da rede credenciada, favoritos e conversa com pesquisa de prestadores com seu plano do ChatGPT. Código aberto, licença MIT. Prévia técnica **0.2.0**.
 
 [Baixar versões](https://github.com/mikaell7w7/cade-doutor/releases) · [Instalação](docs/INSTALACAO.md) · [Privacidade](docs/PRIVACIDADE.md) · [Roadmap](docs/ROADMAP.md)
 
@@ -10,7 +10,7 @@ Pesquisa pessoal da rede credenciada, favoritos e comparação de prestadores co
 - Extensão Chrome Manifest V3 com painel lateral e botão no portal TST Saúde.
 - Favoritos, listas, anotações e backup JSON pessoal. Atualizações preservam unidades favoritas ausentes da nova coleta.
 - Aplicativo local com fluxo oficial **Continue with ChatGPT**: OAuth, PKCE, seleção de conta, modelos da conta, renovação e revogação. Tokens permanecem no computador.
-- Comparação de até 30 prestadores pela Responses API, pesquisa web opcional e tratamento de respostas interrompidas e limites do plano.
+- Assistente conversacional que pesquisa todo o catálogo sem seleção em Explorar, preserva o contexto dos refinamentos e exibe consultas, tabelas, fichas e favoritos na resposta. Comparar uma seleção de até 30 unidades continua opcional. Pesquisa web opt-in e tratamento de interrupções e limites do plano.
 - Mapa Google com origem por CEP, endereço ou geolocalização; confirmação da unidade, notas e quantidade de avaliações; ordenação por proximidade, nota ou volume; rota de carro sob demanda.
 - Plugin MCP local com quatro ferramentas de leitura: pesquisar prestadores, consultar unidade, listar favoritos e conferir atualização.
 
@@ -31,6 +31,25 @@ npm start
 Abra `http://127.0.0.1:43119`, entre em **Conexão**, informe o código exibido no terminal e escolha **Continue with ChatGPT**. Após autorizar na OpenAI, volte e clique em **Atualizar conexão**.
 
 Para a extensão, abra `chrome://extensions`, habilite **Modo do desenvolvedor**, escolha **Carregar sem compactação** e selecione `dist/chrome-extension`. O painel usa o mesmo serviço local. A pesquisa e os favoritos básicos também funcionam sem ele, apenas no navegador.
+
+## Pesquisar e continuar a conversa
+
+A tela inicial é **Assistente IA**, com escopo **Todo o catálogo**. Digite, por exemplo: “Quero clínicas com ortodontia para meus filhos de 13 e 15 anos”. A IA consulta a rede, informa os resultados e permite continuar com “Agora somente no Guará” ou “Compare essas opções”. Não é preciso selecionar prestadores em Explorar.
+
+A resposta mostra tabelas formatadas e cartões dos prestadores consultados, com ficha, favoritos e pesquisa no Google Maps. Os cartões representam registros consultados, não uma recomendação clínica. A opção de pesquisa na web precisa ser habilitada para consultar fontes externas, quando permitida pelo modelo e pela conta. Distâncias e avaliações não são presumidas.
+
+O histórico fica em memória nesta página e é reenviado à OpenAI nas perguntas seguintes. Recarregar, trocar de conta ou clicar em **Nova conversa** limpa o histórico da interface. Favoritos e anotações continuam separados. Perguntas incompletas ou interrompidas não entram no contexto seguinte.
+
+Para atualizar uma instalação pelo código, encerre o serviço com Ctrl+C e execute na pasta do projeto:
+
+```sh
+git pull --ff-only
+npm ci
+npm run build
+npm start
+```
+
+Recarregue a página com Ctrl+Shift+R e informe o novo código em **Conexão**. A conta autorizada e os favoritos são preservados. Na extensão, clique em **Recarregar** em `chrome://extensions` e conecte novamente ao serviço.
 
 ## Por que existe um aplicativo local
 

@@ -4,9 +4,13 @@
 
 Catálogo inicial, extensão Chrome, favoritos e backups, OAuth oficial, comparação por IA, mapa e avaliações sob demanda, plugin MCP de leitura, testes, CI e pacotes versionados.
 
+## 0.2: assistente conversacional
+
+Busca no catálogo completo por ferramentas, filtros e paginação; refinamentos com contexto; respostas formatadas, fichas e favoritos na conversa.
+
 ## Próxima validação
 
-- Homologar login e primeira inferência com uma conta real, incluindo renovação e revogação reais.
+- Validar busca por ferramentas e refinamentos com uma conta real. Login e inferência simples foram observados na prévia 0.1.1; renovação e revogação reais ainda precisam de homologação.
 - Homologar as APIs Google com projeto de faturamento e chaves restritas.
 - Instalar a extensão no Chrome de uso diário e conferir a navegação no portal.
 - Validar proteção de credenciais no Windows antes de divulgar suporte.

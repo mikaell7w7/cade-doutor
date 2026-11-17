@@ -1,6 +1,6 @@
 {
   "name": "cade-doutor",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Pesquisa pessoal da rede credenciada com Sign in with ChatGPT",
@@ -20,10 +20,12 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",
     "jose": "6.2.17",
+    "marked": "18.2.1",
     "zod": "4.6.7"
   },
   "devDependencies": {
     "esbuild": "0.25.12",
+    "linkedom": "0.18.15",
     "prettier": "3.6.2"
   }
 }

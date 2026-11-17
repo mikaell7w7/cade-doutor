@@ -1,8 +1,8 @@
-# Instalação da prévia 0.1.1
+# Instalação da prévia 0.2.0
 
 ## Pacotes prontos
 
-Em [Releases](https://github.com/mikaell7w7/cade-doutor/releases), baixe `cade-doutor-local-0.1.1.zip` e `cade-doutor-chrome-0.1.1.zip`. Confira os arquivos com `SHA256SUMS`. No Linux: `sha256sum --check SHA256SUMS`. Coloque todos os arquivos da release na mesma pasta antes da conferência.
+Em [Releases](https://github.com/mikaell7w7/cade-doutor/releases), baixe `cade-doutor-local-0.2.0.zip` e `cade-doutor-chrome-0.2.0.zip`. Confira os arquivos com `SHA256SUMS`. No Linux: `sha256sum --check SHA256SUMS`. Coloque todos os arquivos da release na mesma pasta antes da conferência.
 
 1. Instale Node.js 22 ou superior. O serviço local é previsto para Linux e macOS; Windows ainda requer homologação da proteção de credenciais.
 2. Extraia o ZIP local em uma pasta e execute `node start.mjs` nessa pasta. Não é necessário instalar dependências npm no pacote pronto.
@@ -14,6 +14,31 @@ Em [Releases](https://github.com/mikaell7w7/cade-doutor/releases), baixe `cade-d
 O botão no portal TST Saúde abre o painel. A categoria da página é usada como filtro quando reconhecida. Nenhum login do plano, cookie ou prontuário é coletado.
 
 Para encerrar, use Ctrl+C no terminal. Não exponha a porta na rede nem use proxy público. Se um encerramento abrupto deixar `runtime.lock`, confirme que não há serviço em execução antes de remover somente esse arquivo do diretório de dados.
+
+## Pesquisar sem selecionar prestadores
+
+1. Abra **Assistente IA** e mantenha **Todo o catálogo** no campo de escopo.
+2. Escolha o modelo da sua conta e escreva o que precisa. Exemplo: “Quero clínicas com ortodontia para adolescentes em Brasília”.
+3. Acompanhe as consultas ao catálogo e os resultados. Abra uma ficha ou marque favoritos diretamente nos cartões.
+4. Continue no mesmo campo: “Agora somente no Guará” ou “Quais também têm odontopediatria?”. A conversa mantém os critérios anteriores.
+5. Para consultar fontes externas, habilite **Pesquisar na web**, quando disponível para o modelo e a conta. A busca no catálogo funciona sem essa opção.
+
+**Nova conversa** limpa o histórico da página. Ele não persiste após recarregar ou trocar de conta. As mensagens completas são reenviadas à OpenAI nas próximas perguntas; favoritos e notas não entram automaticamente. O limite por conversa é de 20 trocas completas ou 120 mil caracteres, o que ocorrer primeiro. Consultas extensas podem atingir o limite de etapas por mensagem; a resposta deve informar o que ficou pendente.
+
+## Atualizar uma instalação pelo código
+
+Encerre o serviço com Ctrl+C. Na pasta onde clonou o projeto:
+
+```sh
+git pull --ff-only
+npm ci
+npm run build
+npm start
+```
+
+Abra `http://127.0.0.1:43119` e use Ctrl+Shift+R. Em **Conexão**, informe o novo código do terminal e clique em **Atualizar conexão** se necessário. A autorização ChatGPT e os favoritos ficam no diretório de dados e são preservados. Não é necessário refazer o login se a conta continuar autorizada.
+
+Na extensão, abra `chrome://extensions`, clique em **Recarregar** no Cadê Doutor, reabra o painel e conecte com o novo código. A pasta carregada deve continuar sendo `dist/chrome-extension` dentro do projeto.
 
 ## Uso pessoal
 
@@ -43,7 +68,7 @@ Esta prévia não geocodifica automaticamente todas as 690 unidades e não afirm
 
 ## Plugin MCP local
 
-O pacote `cade-doutor-plugin-0.1.1.zip` contém uma pasta `cade-doutor` com `plugin.json`, `mcp.json`, servidor e catálogo. Instale em um host de plugins locais compatível. `${PLUGIN_ROOT}` é resolvido por esse host.
+O pacote `cade-doutor-plugin-0.2.0.zip` contém uma pasta `cade-doutor` com `plugin.json`, `mcp.json`, servidor e catálogo. Instale em um host de plugins locais compatível. `${PLUGIN_ROOT}` é resolvido por esse host.
 
 Em clientes MCP que exigem configuração manual, registre o servidor stdio com comando `node` e argumento absoluto `/caminho/cade-doutor/server/mcp.mjs`. Use o mesmo usuário do sistema e, se personalizado, o mesmo `CADE_DOUTOR_HOME` do aplicativo local. O plugin não necessita do serviço HTTP em execução para ler o catálogo e os favoritos.
 

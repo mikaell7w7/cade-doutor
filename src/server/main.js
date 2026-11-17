@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { Store } from "./store.js";
 import { Auth } from "./auth.js";
-import { ask, listModels } from "./inference.js";
+import { ask, listModels, resolveScope } from "./inference.js";
 import { loadCatalog, replaceCatalog, bundledCatalog } from "./catalog-store.js";
 import { validatePersonal } from "../core/catalog.js";
 import { Maps } from "./maps.js";
@@ -38,6 +38,7 @@ export async function createApp({
   store = new Store(),
   port = 43119,
   auth = new Auth(store),
+  askFn = ask,
   maps = new Maps(process.env.GOOGLE_MAPS_SERVER_KEY),
 } = {}) {
   const base = "http://127.0.0.1:" + port,
@@ -106,7 +107,7 @@ export async function createApp({
         return;
       }
       if (u.pathname === "/api/health") {
-        json(res, 200, { name: "Cadê Doutor", version: "0.1.1" });
+        json(res, 200, { name: "Cadê Doutor", version: "0.2.0" });
         return;
       }
       if (u.pathname === "/api/pair" && req.method === "POST") {
@@ -245,39 +246,40 @@ export async function createApp({
           return;
         }
         if (u.pathname === "/api/ask" && req.method === "POST") {
-          const b = await readJSON(req, 30000),
+          const b = await readJSON(req, 180000),
             c = await loadCatalog(root, store);
-          if (!Array.isArray(b.ids) || b.ids.length > 30)
-            throw new Error("Selecione até 30 unidades.");
-          const ids = new Set(b.ids),
-            units = c.units
-              .filter((x) => ids.has(x.id))
-              .map((x) => ({ ...x, catalogDate: c.collectedAt }));
-          if (units.length !== ids.size)
-            throw new Error("Unidade não encontrada no catálogo atual.");
+          const accountKey = (await auth.profiles()).active;
+          if (!accountKey) throw new Error("Selecione uma conta ChatGPT.");
+          if (b.account !== undefined && b.account !== accountKey)
+            throw new Error(
+              "A conta mudou. Atualize a conexão e inicie uma nova conversa.",
+            );
+          if (b.history?.length && b.account !== accountKey)
+            throw new Error("Confirme a conta antes de continuar a conversa.");
+          resolveScope(c, b.scope ?? "catalog", b.ids ?? []);
           res.writeHead(200, {
             "Content-Type": "application/x-ndjson",
             "Cache-Control": "no-store",
           });
-          const accountKey = (await auth.profiles()).active;
-          if (!accountKey) {
-            res.end(JSON.stringify({ error: "Selecione uma conta ChatGPT." }) + "\n");
-            return;
-          }
           const controller = new AbortController();
           inflight.add(controller);
           res.on("close", () => controller.abort());
           try {
-            await ask(
+            await askFn(
               { access: () => auth.access(accountKey) },
               {
                 model: b.model,
                 question: b.question,
-                units,
+                catalog: c,
+                scope: b.scope ?? "catalog",
+                ids: b.ids ?? [],
+                history: b.history ?? [],
                 webSearch: b.webSearch === true,
                 signal: controller.signal,
               },
               (delta) => res.write(JSON.stringify({ delta }) + "\n"),
+              undefined,
+              (event) => res.write(JSON.stringify(event) + "\n"),
             );
             res.end(JSON.stringify({ done: true }) + "\n");
           } catch (e) {
